@@ -25,17 +25,51 @@
 //! What is the sum of the fuel requirements for all of the modules on your
 //! spacecraft?
 //!
+//! ## Part 2
+//!
+//! During the second Go / No Go poll, the Elf in charge of the Rocket Equation
+//! Double-Checker stops the launch sequence. Apparently, you forgot to include
+//! additional fuel for the fuel you just added.
+//!
+//! Fuel itself requires fuel just like a module - take its mass, divide by
+//! three, round down, and subtract 2. However, that fuel also requires fuel,
+//! and that fuel requires fuel, and so on. Any mass that would require negative
+//! fuel should instead be treated as if it requires zero fuel; the remaining
+//! mass, if any, is instead handled by wishing really hard, which has no mass
+//! and is outside the scope of this calculation.
+//!
+//! So, for each module mass, calculate its fuel and add it to the total. Then,
+//! treat the fuel amount you just calculated as the input mass and repeat the
+//! process, continuing until a fuel requirement is zero or negative. For
+//! example:
+//!
+//! * A module of mass 14 requires 2 fuel. This fuel requires no further fuel
+//!   (2 divided by 3 and rounded down is 0, which would call for a negative
+//!   fuel), so the total fuel required is still just 2.
+//! * At first, a module of mass 1969 requires 654 fuel. Then, this fuel
+//!   requires 216 more fuel (654 / 3 - 2). 216 then requires 70 more fuel,
+//!   which requires 21 fuel, which requires 5 fuel, which requires no further
+//!   fuel. So, the total fuel required for a module of mass 1969 is
+//!   654 + 216 + 70 + 21 + 5 = 966.
+//! * The fuel required by a module of mass 100756 and its fuel is:
+//!   33583 + 11192 + 3728 + 1240 + 411 + 135 + 43 + 12 + 2 = 50346.
+//!
+//! What is the sum of the fuel requirements for all of the modules on your
+//! spacecraft when also taking into account the mass of the added fuel?
+//! (Calculate the fuel requirements for each module separately, then add them
+//! all up at the end.)
+//!
 //! [Advent of Code 2019 - Day 1](https://adventofcode.com/2019/day/1)
 
 use std::fmt;
 use std::fmt::Display;
-use std::ops::Add;
+use std::ops::{Add, AddAssign};
 use std::str::FromStr;
 
 #[cfg(test)]
 mod tests;
 
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Mass(u32);
 
 impl Display for Mass {
@@ -48,9 +82,13 @@ impl Mass {
     pub fn new(value: u32) -> Self {
         Self(value)
     }
+
+    pub fn value(self) -> u32 {
+        self.0
+    }
 }
 
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Fuel(u32);
 
 impl Display for Fuel {
@@ -63,6 +101,14 @@ impl Fuel {
     pub const fn zero() -> Self {
         Self(0)
     }
+
+    pub fn value(self) -> u32 {
+        self.0
+    }
+
+    pub fn mass(self) -> Mass {
+        Mass::new(self.0)
+    }
 }
 
 impl Add<Self> for Fuel {
@@ -70,6 +116,12 @@ impl Add<Self> for Fuel {
 
     fn add(self, rhs: Fuel) -> Self::Output {
         Self(self.0 + rhs.0)
+    }
+}
+
+impl AddAssign<Self> for Fuel {
+    fn add_assign(&mut self, rhs: Fuel) {
+        self.0 += rhs.0
     }
 }
 
@@ -93,10 +145,40 @@ pub fn parse(input: &str) -> Vec<Mass> {
 #[aoc(day1, part1)]
 pub fn fuel_requirements(input: &[Mass]) -> Fuel {
     input.iter().fold(Fuel::zero(), |acc_fuel, mass| {
-        acc_fuel + calculate_fuel(mass)
+        acc_fuel + calculate_fuel_for_mass(*mass)
     })
 }
 
-fn calculate_fuel(mass: &Mass) -> Fuel {
-    Fuel(mass.0 / 3 - 2)
+fn calculate_fuel_for_mass(mass: Mass) -> Fuel {
+    const OFFSET: u32 = 2;
+    let factor = mass.0 / 3;
+    if factor > OFFSET {
+        Fuel(factor - OFFSET)
+    } else {
+        Fuel::zero()
+    }
+}
+
+#[aoc(day1, part2)]
+pub fn fuel_requirements_incl_fuel_mass(input: &[Mass]) -> Fuel {
+    input.iter().fold(Fuel::zero(), |acc_fuel, mass| {
+        let module_fuel = calculate_fuel_for_mass(*mass);
+        acc_fuel + module_fuel + calculate_fuel_for_fuel(module_fuel)
+    })
+}
+
+fn calculate_fuel_for_fuel(fuel: Fuel) -> Fuel {
+    const ZERO_FUEL: Fuel = Fuel::zero();
+
+    let mut total_fuel = Fuel::zero();
+    let mut added_fuel: Vec<Fuel> = Vec::with_capacity(16);
+    added_fuel.push(fuel);
+    while let Some(next) = added_fuel.pop() {
+        let more_fuel = calculate_fuel_for_mass(next.mass());
+        if more_fuel > ZERO_FUEL {
+            total_fuel += more_fuel;
+            added_fuel.push(more_fuel);
+        }
+    }
+    total_fuel
 }
