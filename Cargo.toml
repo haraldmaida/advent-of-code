@@ -1,0 +1,23 @@
+[package]
+name = "advent-of-code-2019"
+version = "0.1.0"
+authors = ["haraldmaida"]
+license = "MIT"
+
+description = """Solving Advent of Code Puzzles for 2019"""
+
+readme = "README.md"
+repository = "https://github.com/haraldmaida/advent-of-code-2019"
+keywords = ["advent", "puzzle"]
+
+edition = "2018"
+
+[lib]
+bench = false
+
+[dependencies]
+aoc-runner = "0.2"
+aoc-runner-derive = "0.2"
+
+[dev-dependencies]
+proptest = "0.9"
