@@ -11,7 +11,23 @@
 //!
 //! [Advent of Code 2019](https://adventofcode.com/2019)
 
-extern crate aoc_runner;
+#![deny(unsafe_code)]
+#![warn(
+    bare_trait_objects,
+    broken_intra_doc_links,
+    missing_copy_implementations,
+    missing_debug_implementations,
+    private_doc_tests,
+    rust_2018_idioms,
+    trivial_casts,
+    trivial_numeric_casts,
+    unstable_features,
+    unused_extern_crates,
+    unused_import_braces,
+    unused_qualifications
+)]
+//#![warn(missing_docs)] //TODO uncomment eventually
+
 #[macro_use]
 extern crate aoc_runner_derive;
 #[macro_use]

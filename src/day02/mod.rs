@@ -209,7 +209,7 @@ pub enum Next {
     Halt,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct IntcodeVM {
     pc: usize,
 }
