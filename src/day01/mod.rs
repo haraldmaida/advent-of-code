@@ -61,67 +61,77 @@
 //!
 //! [Advent of Code 2019 - Day 1](https://adventofcode.com/2019/day/1)
 
-use std::fmt;
-use std::fmt::Display;
-use std::ops::{Add, AddAssign};
+use crate::day01::fuel::Fuel;
+use crate::day01::mass::Mass;
 use std::str::FromStr;
 
-#[cfg(test)]
-mod tests;
+mod mass {
+    use std::fmt::{self, Display};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub struct Mass(u32);
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+    pub struct Mass(u32);
 
-impl Display for Mass {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.0)
+    impl Display for Mass {
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            write!(f, "{}", self.0)
+        }
+    }
+
+    impl Mass {
+        pub fn new(value: u32) -> Self {
+            Self(value)
+        }
+
+        pub fn value(self) -> u32 {
+            self.0
+        }
     }
 }
 
-impl Mass {
-    pub fn new(value: u32) -> Self {
-        Self(value)
+mod fuel {
+    use crate::day01::mass::Mass;
+    use std::fmt::{self, Display};
+    use std::ops::{Add, AddAssign};
+
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+    pub struct Fuel(u32);
+
+    impl Display for Fuel {
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            write!(f, "{}", self.0)
+        }
     }
 
-    pub fn value(self) -> u32 {
-        self.0
-    }
-}
+    impl Fuel {
+        pub const fn zero() -> Self {
+            Self(0)
+        }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub struct Fuel(u32);
+        pub fn new(value: u32) -> Self {
+            Fuel(value)
+        }
 
-impl Display for Fuel {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.0)
-    }
-}
+        pub fn value(self) -> u32 {
+            self.0
+        }
 
-impl Fuel {
-    pub const fn zero() -> Self {
-        Self(0)
-    }
-
-    pub fn value(self) -> u32 {
-        self.0
+        pub fn mass(self) -> Mass {
+            Mass::new(self.0)
+        }
     }
 
-    pub fn mass(self) -> Mass {
-        Mass::new(self.0)
+    impl Add<Self> for Fuel {
+        type Output = Self;
+
+        fn add(self, rhs: Fuel) -> Self::Output {
+            Self(self.0 + rhs.0)
+        }
     }
-}
 
-impl Add<Self> for Fuel {
-    type Output = Self;
-
-    fn add(self, rhs: Fuel) -> Self::Output {
-        Self(self.0 + rhs.0)
-    }
-}
-
-impl AddAssign<Self> for Fuel {
-    fn add_assign(&mut self, rhs: Fuel) {
-        self.0 += rhs.0
+    impl AddAssign<Self> for Fuel {
+        fn add_assign(&mut self, rhs: Fuel) {
+            self.0 += rhs.0
+        }
     }
 }
 
@@ -131,7 +141,7 @@ pub fn parse(input: &str) -> Vec<Mass> {
         .lines()
         .enumerate()
         .map(|(idx, text)| {
-            Mass(u32::from_str(text.trim()).unwrap_or_else(|_| {
+            Mass::new(u32::from_str(text.trim()).unwrap_or_else(|_| {
                 panic!(
                     "input text at line {:03} is not an u32 but is {:?}",
                     idx + 1,
@@ -151,9 +161,9 @@ pub fn fuel_requirements(input: &[Mass]) -> Fuel {
 
 fn calculate_fuel_for_mass(mass: Mass) -> Fuel {
     const OFFSET: u32 = 2;
-    let factor = mass.0 / 3;
+    let factor = mass.value() / 3;
     if factor > OFFSET {
-        Fuel(factor - OFFSET)
+        Fuel::new(factor - OFFSET)
     } else {
         Fuel::zero()
     }
@@ -182,3 +192,6 @@ fn calculate_fuel_for_fuel(fuel: Fuel) -> Fuel {
     }
     total_fuel
 }
+
+#[cfg(test)]
+mod tests;

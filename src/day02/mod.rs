@@ -148,9 +148,6 @@ use std::iter::FromIterator;
 use std::ops::{Deref, DerefMut};
 use std::str::FromStr;
 
-#[cfg(test)]
-mod tests;
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Opcode {
     Add,
@@ -345,3 +342,6 @@ fn search_noun_and_verb_for_result(exepcted_result: i32, input: &[i32]) -> (i32,
     }
     (12, 2)
 }
+
+#[cfg(test)]
+mod tests;
