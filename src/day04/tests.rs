@@ -10,13 +10,6 @@ fn parse_range_in_puzzel_input() {
 }
 
 #[test]
-fn number_of_possible_passwords_in_range_of_puzzle_input() {
-    let num_possible_passwords = number_of_possible_passwords_in_range(&parse_range(INPUT));
-
-    assert_eq!(num_possible_passwords, 1919);
-}
-
-#[test]
 fn construct_digit_code_generator_from_136818_to_685979() {
     let code_gen = DigitCodeGenerator::from(136818..=685979);
 
@@ -29,7 +22,9 @@ fn construct_digit_code_generator_from_136818_to_685979() {
 fn generate_digit_codes_with_range_211_to_425() {
     let code_gen = DigitCodeGenerator::from(211..=425);
 
-    let digit_codes: Vec<String> = code_gen.collect();
+    let digit_codes: Vec<String> = code_gen
+        .filter(|code| has_two_same_adjacent_digits(code))
+        .collect();
 
     assert_eq!(
         digit_codes,
@@ -64,4 +59,19 @@ fn generate_digit_codes_with_range_211_to_425() {
             "399".to_string(),
         ]
     );
+}
+
+#[test]
+fn number_of_possible_passwords_with_double_in_puzzle_input() {
+    let num_possible_passwords = number_of_possible_passwords_with_double(&parse_range(INPUT));
+
+    assert_eq!(num_possible_passwords, 1919);
+}
+
+#[test]
+fn number_of_possible_passwords_with_lonely_double_in_puzzle_input() {
+    let num_possible_passwords =
+        number_of_possible_passwords_with_lonely_double(&parse_range(INPUT));
+
+    assert_eq!(num_possible_passwords, 1291);
 }

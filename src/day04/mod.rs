@@ -21,8 +21,27 @@
 //! How many different passwords within the range given in your puzzle input
 //! meet these criteria?
 //!
+//! # Part 2
+//!
+//! An Elf just remembered one more important detail: the two adjacent matching
+//! digits are not part of a larger group of matching digits.
+//!
+//! Given this additional criterion, but still ignoring the range rule, the
+//! following are now true:
+//!
+//! * 112233 meets these criteria because the digits never decrease and all
+//!   repeated digits are exactly two digits long.
+//! * 123444 no longer meets the criteria (the repeated 44 is part of a larger
+//!   group of 444).
+//! * 111122 meets the criteria (even though 1 is repeated more than twice, it
+//!   still contains a double 22).
+//!
+//! How many different passwords within the range given in your puzzle input
+//! meet all of the criteria?
+//!
 //! [Advent of Code 2019 - Day 4](https://adventofcode.com/2019/day/4)
 
+use std::collections::HashMap;
 use std::iter::FromIterator;
 use std::ops::RangeInclusive;
 use std::str::FromStr;
@@ -96,22 +115,17 @@ impl Iterator for DigitCodeGenerator {
         if self.current == self.upper_bound || self.current > self.upper_bound {
             return None;
         }
-        if self.first_yield && has_two_same_adjacent_digits(&self.current) {
+        if self.first_yield {
             self.first_yield = false;
             return Some(String::from_iter(self.current.iter()));
         }
-        loop {
-            for i in (0..self.current.len()).rev() {
-                let (d2, carry) = next_higher_digit(self.current[i]);
-                self.current[i] = d2;
-                if !carry {
-                    for j in i..self.current.len() {
-                        self.current[j] = d2;
-                    }
-                    break;
+        for i in (0..self.current.len()).rev() {
+            let (d2, carry) = next_higher_digit(self.current[i]);
+            self.current[i] = d2;
+            if !carry {
+                for j in i..self.current.len() {
+                    self.current[j] = d2;
                 }
-            }
-            if has_two_same_adjacent_digits(&self.current) {
                 break;
             }
         }
@@ -151,18 +165,39 @@ fn next_higher_digit(digit: char) -> (char, bool) {
     }
 }
 
-fn has_two_same_adjacent_digits(digits: &[char]) -> bool {
+fn has_two_same_adjacent_digits(digits: &str) -> bool {
     digits
-        .iter()
-        .zip(digits.iter().skip(1))
+        .chars()
+        .zip(digits.chars().skip(1))
         .any(|(c1, c2)| c1 == c2)
 }
 
+fn has_lonely_two_same_adjacent_digits(digits: &str) -> bool {
+    let mut group_counts = HashMap::new();
+    digits
+        .chars()
+        .zip(digits.chars().skip(1))
+        .filter(|(c1, c2)| c1 == c2)
+        .for_each(|pair| *group_counts.entry(pair).or_insert(0) += 1);
+    group_counts.values().any(|count| *count == 1)
+}
+
 #[aoc(day4, part1)]
-pub fn number_of_possible_passwords_in_range(range: &RangeInclusive<u32>) -> usize {
+pub fn number_of_possible_passwords_with_double(range: &RangeInclusive<u32>) -> usize {
     let digit_code_generator = DigitCodeGenerator::from(range.clone());
 
-    digit_code_generator.count()
+    digit_code_generator
+        .filter(|code| has_two_same_adjacent_digits(code))
+        .count()
+}
+
+#[aoc(day4, part2)]
+pub fn number_of_possible_passwords_with_lonely_double(range: &RangeInclusive<u32>) -> usize {
+    let digit_code_generator = DigitCodeGenerator::from(range.clone());
+
+    digit_code_generator
+        .filter(|code| has_lonely_two_same_adjacent_digits(code))
+        .count()
 }
 
 #[cfg(test)]
