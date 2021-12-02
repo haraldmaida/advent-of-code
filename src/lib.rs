@@ -6,15 +6,15 @@
 #![deny(unsafe_code, unstable_features)]
 #![warn(
     bare_trait_objects,
-    broken_intra_doc_links,
     missing_copy_implementations,
     missing_debug_implementations,
-    private_doc_tests,
     rust_2018_idioms,
     rust_2021_incompatible_closure_captures,
     rust_2021_incompatible_or_patterns,
     rust_2021_prefixes_incompatible_syntax,
     rust_2021_prelude_collisions,
+    rustdoc::broken_intra_doc_links,
+    rustdoc::private_doc_tests,
     trivial_casts,
     trivial_numeric_casts,
     unused_extern_crates,
@@ -28,5 +28,7 @@
 
 #[macro_use]
 extern crate aoc_runner_derive;
+
+pub mod day01;
 
 aoc_lib! { year = 2021 }
