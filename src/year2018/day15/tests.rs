@@ -1,7 +1,7 @@
 use super::*;
 use proptest::prelude::*;
 
-const INPUT: &str = include_str!("../../../input/2018/day15.txt");
+const INPUT: &str = include_str!("../../../../input/2018/day15.txt");
 
 const EXAMPLE1_INPUT: &str = "\
 #######

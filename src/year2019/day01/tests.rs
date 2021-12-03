@@ -1,6 +1,6 @@
 use super::*;
 
-const INPUT: &str = include_str!("../../../input/2019/day1.txt");
+const INPUT: &str = include_str!("../../../../input/2019/day1.txt");
 
 mod calculate_fuel_for_module {
     use super::*;

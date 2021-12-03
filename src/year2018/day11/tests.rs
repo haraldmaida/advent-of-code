@@ -1,6 +1,6 @@
 use super::*;
 
-const INPUT: &str = include_str!("../../../input/2018/day11.txt");
+const INPUT: &str = include_str!("../../../../input/2018/day11.txt");
 
 mod calc_cell_power {
     use super::*;

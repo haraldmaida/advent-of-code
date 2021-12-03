@@ -1,6 +1,6 @@
 use super::*;
 
-const INPUT: &str = include_str!("../../../input/2018/day19.txt");
+const INPUT: &str = include_str!("../../../../input/2018/day19.txt");
 
 const EXAMPLE1_INPUT: &str = "\
 #ip 0

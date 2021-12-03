@@ -1,6 +1,6 @@
 use super::*;
 
-const INPUT: &str = include_str!("../../../input/2018/day9.txt");
+const INPUT: &str = include_str!("../../../../input/2018/day9.txt");
 
 mod game_runner {
     use super::*;
