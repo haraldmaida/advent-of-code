@@ -211,7 +211,7 @@ impl FromStr for Point {
 pub struct Distance(pub u32);
 
 impl Display for Distance {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.0)
     }
 }
@@ -282,8 +282,8 @@ pub fn largest_area(points: &[Point]) -> (Point, u32) {
         match (top_left, top_right, bottom_left, bottom_right) {
             (Some(_), Some(_), Some(_), Some(_)) => {
                 valid_points.insert(point);
-            },
-            _ => {},
+            }
+            _ => {}
         }
     }
 

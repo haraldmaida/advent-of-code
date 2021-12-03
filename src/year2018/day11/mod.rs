@@ -130,7 +130,7 @@ impl FromStr for SerialNo {
 pub struct PowerLevel(pub i32);
 
 impl Display for PowerLevel {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{} W", self.0)
     }
 }
@@ -154,7 +154,7 @@ pub struct CellCoord {
 }
 
 impl Display for CellCoord {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}/{}", self.x, self.y)
     }
 }
@@ -176,7 +176,7 @@ impl From<CellCoord> for RackId {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct PowerGrid {
     serial_no: SerialNo,
     size: u32,
@@ -231,7 +231,7 @@ impl CellGroup {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct Groups {
     group_size: u32,
     max: u32,
@@ -265,7 +265,7 @@ impl Iterator for Groups {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct Cells {
     x0: u32,
     max: CellCoord,
@@ -309,7 +309,7 @@ impl Iterator for Cells {
 pub struct Answer(u32, u32, u32);
 
 impl Display for Answer {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{},{},{}", self.0, self.1, self.2)
     }
 }

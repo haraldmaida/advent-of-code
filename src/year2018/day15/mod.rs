@@ -504,13 +504,13 @@ pub struct Id<T: Unit> {
 }
 
 impl<T: Unit> Debug for Id<T> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "Id({})", self.value)
     }
 }
 
 impl<T: Unit> Display for Id<T> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.value)
     }
 }
@@ -589,7 +589,7 @@ impl Position {
 }
 
 impl Display for Position {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "({},{})", self.x, self.y)
     }
 }
@@ -693,7 +693,7 @@ pub enum Move {
 }
 
 impl Display for Move {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let symbol = match *self {
             Up => "\u{2191}",
             Down => "\u{2193}",
@@ -708,7 +708,7 @@ impl Display for Move {
 pub struct HitPoints(i32);
 
 impl Display for HitPoints {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.0)
     }
 }
@@ -739,7 +739,7 @@ impl Add for HitPoints {
 pub struct AttackPower(i32);
 
 impl Display for AttackPower {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.0)
     }
 }
@@ -793,7 +793,7 @@ pub struct Elf {
 }
 
 impl Display for Elf {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "E{}", self.id)
     }
 }
@@ -840,7 +840,7 @@ pub struct Goblin {
 }
 
 impl Display for Goblin {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "G{}", self.id)
     }
 }
@@ -911,7 +911,7 @@ pub enum Tile {
 }
 
 impl Display for Tile {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let symbol = match *self {
             OpenCavern => ".",
             Wall => "#",
@@ -924,7 +924,7 @@ impl Display for Tile {
 pub struct Cave(HashSet<Position>);
 
 impl Display for Cave {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let (top_left, bottom_right) = self.area();
         for y in top_left.y..=bottom_right.y {
             let mut formatted = String::with_capacity(40);
@@ -996,7 +996,7 @@ impl Default for Vertex {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum FightResult {
     WinnerElves(HitPoints),
     WinnerGoblins(HitPoints),
@@ -1015,7 +1015,7 @@ pub struct Combat {
 }
 
 impl Display for Combat {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let (top_left, bottom_right) = self.cave.area();
         for y in top_left.y..=bottom_right.y {
             let mut formatted = String::with_capacity(40);
@@ -1440,22 +1440,22 @@ pub fn parse(input: &str) -> Combat {
         for (x, chr) in line.chars().enumerate() {
             let position = Position { x, y };
             match chr {
-                '.' => {},
+                '.' => {}
                 '#' => {
                     walls.insert(position);
-                },
+                }
                 'E' => {
                     let id = elf_id_seq.next_val();
                     elves.insert(position, Elf::new(id));
-                },
+                }
                 'G' => {
                     let id = goblin_id_seq.next_val();
                     goblins.insert(position, Goblin::new(id));
-                },
-                s if s.is_whitespace() => {},
+                }
+                s if s.is_whitespace() => {}
                 _ => {
                     panic!("unexpected character {} at {}:{}", chr, y, x);
-                },
+                }
             }
         }
     }
@@ -1477,18 +1477,18 @@ fn calculate_outcome(fight_result: FightResult, rounds: u32) -> i32 {
                 rounds, remaining_hitpoints
             );
             remaining_hitpoints.val() * rounds as i32
-        },
+        }
         WinnerGoblins(remaining_hitpoints) => {
             debug!(
                 "Goblins win after {} rounds with {} total hit points left!",
                 rounds, remaining_hitpoints
             );
             remaining_hitpoints.val() * rounds as i32
-        },
+        }
         Tie => {
             debug!("The combat ended with a tie after {} rounds", rounds);
             0
-        },
+        }
         Ongoing => unreachable!(),
     }
 }

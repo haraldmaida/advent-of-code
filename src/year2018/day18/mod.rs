@@ -240,7 +240,7 @@ impl Position {
 }
 
 impl Display for Position {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "({},{})", self.x, self.y)
     }
 }
@@ -280,7 +280,7 @@ impl Add<Self> for Position {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct Adjacent {
     position: Position,
     offset: usize,
@@ -316,7 +316,7 @@ pub enum Resource {
 }
 
 impl Display for Resource {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let symbol = match *self {
             OpenGround => ".",
             Trees => "|",
@@ -332,7 +332,7 @@ pub struct Area {
 }
 
 impl Display for Area {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut line = String::with_capacity(16);
         let (top_left, bottom_right) = self.corners();
         for y in top_left.y..=bottom_right.y {
@@ -468,7 +468,7 @@ impl Area {
                                 }
                             }
                         }
-                    },
+                    }
                     Trees => {
                         let mut num_adj_lumberyards = 0;
                         for adj_pos in position.adjacent() {
@@ -484,7 +484,7 @@ impl Area {
                         } else {
                             mutated_area.resources.insert(position, Trees);
                         }
-                    },
+                    }
                     Lumberyard => {
                         let mut num_trees = 0;
                         let mut num_lumberyard = 0;
@@ -492,18 +492,18 @@ impl Area {
                             match self.resource(adj_pos) {
                                 Trees => {
                                     num_trees += 1;
-                                },
+                                }
                                 Lumberyard => {
                                     num_lumberyard += 1;
-                                },
-                                _ => {},
+                                }
+                                _ => {}
                             }
                             if num_trees >= 1 && num_lumberyard >= 1 {
                                 mutated_area.resources.insert(position, Lumberyard);
                                 break;
                             }
                         }
-                    },
+                    }
                 }
             }
         }

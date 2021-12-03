@@ -139,7 +139,7 @@ pub struct BreedRule {
 }
 
 impl Display for BreedRule {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut rule = String::with_capacity(self.pattern.len() + 5);
         self.pattern.iter().for_each(|&pot| {
             rule.push(fmt_pot(pot));
@@ -177,7 +177,7 @@ impl AsRef<[BreedRule]> for BreedingRules {
 pub struct PotRow(Vec<bool>);
 
 impl Display for PotRow {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut pots = String::with_capacity(self.0.len());
         self.0.iter().for_each(|&pot| pots.push(fmt_pot(pot)));
         f.write_str(&pots)

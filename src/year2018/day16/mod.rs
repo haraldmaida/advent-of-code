@@ -167,7 +167,7 @@ const INSTRUCTION_SET: &[Mnemonic] = &[
 ];
 
 impl Display for Mnemonic {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let display = match *self {
             AddR => "addr",
             AddI => "addi",
@@ -220,7 +220,7 @@ impl FromStr for Mnemonic {
 pub struct OpCode(pub u8);
 
 impl Display for OpCode {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{:x}", self.0)
     }
 }
@@ -231,7 +231,7 @@ pub type Data = u64;
 pub struct Register([Data; 4]);
 
 impl Display for Register {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
             "[{}, {}, {}, {}]",
@@ -275,7 +275,7 @@ pub struct Instruction {
 }
 
 impl Display for Instruction {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{} {} {} {}", self.opcode, self.a, self.b, self.c)
     }
 }
@@ -345,7 +345,7 @@ pub struct Sample {
 }
 
 impl Display for Sample {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         writeln!(f, "Before: {}", self.before)?;
         writeln!(f, "{}", self.instruction)?;
         writeln!(f, "After:  {}", self.after)
@@ -455,21 +455,21 @@ fn parse_register(s: &str) -> Result<Register, String> {
     let mut c_val = String::with_capacity(1);
     for chr in s.chars() {
         match chr {
-            '[' => {},
+            '[' => {}
             ']' => {
                 let value = c_val.parse::<Data>().map_err(|e| e.to_string())?;
                 values[c_idx] = value;
                 c_idx += 1;
                 c_val.clear();
                 break;
-            },
+            }
             ',' => {
                 let value = c_val.parse::<Data>().map_err(|e| e.to_string())?;
                 values[c_idx] = value;
                 c_idx += 1;
                 c_val.clear();
-            },
-            ' ' => {},
+            }
+            ' ' => {}
             _ if chr.is_digit(10) => c_val.push(chr),
             _ => return Err(format!("unexpected character {}", chr)),
         }

@@ -124,7 +124,7 @@ use self::Mnemonic::*;
 pub struct Register([Data; 6]);
 
 impl Display for Register {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
             "[{}, {}, {}, {}, {}, {}]",
@@ -168,7 +168,7 @@ pub struct Instruction {
 }
 
 impl Display for Instruction {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{} {} {} {}", self.opcode, self.a, self.b, self.c)
     }
 }
@@ -187,7 +187,7 @@ impl Instruction {
 
 pub type Addr = Data;
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Interpreter {
     ip_reg: Addr,
     ip: Addr,
@@ -269,7 +269,7 @@ pub struct Program {
 }
 
 impl Display for Program {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         writeln!(f, "#ip {}", self.ip_reg)?;
         for instruction in &self.instructions {
             writeln!(f, "{}", instruction)?;

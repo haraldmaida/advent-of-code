@@ -272,7 +272,7 @@ pub struct Position {
 }
 
 impl Display for Position {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}/{}", self.x, self.y)
     }
 }
@@ -324,7 +324,7 @@ pub enum Direction {
 }
 
 impl Display for Direction {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         use self::Direction::*;
         let symbol = match *self {
             North => "\u{2191}",
@@ -371,7 +371,7 @@ pub enum MoveResult {
 pub struct CartNo(u8);
 
 impl Display for CartNo {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.0)
     }
 }
@@ -395,7 +395,7 @@ pub struct Cart {
 }
 
 impl Display for Cart {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}: {} {}", self.number, self.position, self.direction)
     }
 }
@@ -418,112 +418,112 @@ impl Cart {
         match (self.direction, rail) {
             (North, NorthSouth) => {
                 self.position.y -= 1;
-            },
+            }
             (South, NorthSouth) => {
                 self.position.y += 1;
-            },
+            }
             (West, WestEast) => {
                 self.position.x -= 1;
-            },
+            }
             (East, WestEast) => {
                 self.position.x += 1;
-            },
+            }
             (North, LeftTurn) => {
                 self.direction = West;
                 self.position.x -= 1;
-            },
+            }
             (South, LeftTurn) => {
                 self.direction = East;
                 self.position.x += 1;
-            },
+            }
             (West, LeftTurn) => {
                 self.direction = North;
                 self.position.y -= 1;
-            },
+            }
             (East, LeftTurn) => {
                 self.direction = South;
                 self.position.y += 1;
-            },
+            }
             (North, RightTurn) => {
                 self.direction = East;
                 self.position.x += 1;
-            },
+            }
             (South, RightTurn) => {
                 self.direction = West;
                 self.position.x -= 1;
-            },
+            }
             (West, RightTurn) => {
                 self.direction = South;
                 self.position.y += 1;
-            },
+            }
             (East, RightTurn) => {
                 self.direction = North;
                 self.position.y -= 1;
-            },
+            }
             (North, Intersection) => {
                 match self.at_intersection {
                     TurnLeft => {
                         self.direction = West;
                         self.position.x -= 1;
-                    },
+                    }
                     GoStraight => {
                         self.position.y -= 1;
-                    },
+                    }
                     TurnRight => {
                         self.direction = East;
                         self.position.x += 1;
-                    },
+                    }
                 }
                 self.at_intersection = self.at_intersection.next();
-            },
+            }
             (South, Intersection) => {
                 match self.at_intersection {
                     TurnLeft => {
                         self.direction = East;
                         self.position.x += 1;
-                    },
+                    }
                     GoStraight => {
                         self.position.y += 1;
-                    },
+                    }
                     TurnRight => {
                         self.direction = West;
                         self.position.x -= 1;
-                    },
+                    }
                 }
                 self.at_intersection = self.at_intersection.next();
-            },
+            }
             (West, Intersection) => {
                 match self.at_intersection {
                     TurnLeft => {
                         self.direction = South;
                         self.position.y += 1;
-                    },
+                    }
                     GoStraight => {
                         self.position.x -= 1;
-                    },
+                    }
                     TurnRight => {
                         self.direction = North;
                         self.position.y -= 1;
-                    },
+                    }
                 }
                 self.at_intersection = self.at_intersection.next();
-            },
+            }
             (East, Intersection) => {
                 match self.at_intersection {
                     TurnLeft => {
                         self.direction = North;
                         self.position.y -= 1;
-                    },
+                    }
                     GoStraight => {
                         self.position.x += 1;
-                    },
+                    }
                     TurnRight => {
                         self.direction = South;
                         self.position.y += 1;
-                    },
+                    }
                 }
                 self.at_intersection = self.at_intersection.next();
-            },
+            }
             (dir, rail) => return IllegalMove(dir, rail),
         };
         Moved
@@ -540,7 +540,7 @@ pub enum RailKind {
 }
 
 impl Display for RailKind {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         use self::RailKind::*;
         let symbol = match *self {
             NorthSouth => "|",
@@ -685,7 +685,7 @@ pub struct CartsNTracks {
 }
 
 impl Display for CartsNTracks {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let area = self.tracks.area();
         let width = (area.1.y - area.0.y) as usize + 1;
         for y in area.0.y..=area.1.y {
@@ -785,32 +785,32 @@ fn parse(input: &str) -> CartsNTracks {
             match symbol {
                 '-' => {
                     carts_n_tracks.insert_rail(pos, WestEast);
-                },
+                }
                 '|' => {
                     carts_n_tracks.insert_rail(pos, NorthSouth);
-                },
+                }
                 '/' => {
                     carts_n_tracks.insert_rail(pos, RightTurn);
-                },
+                }
                 '\\' => {
                     carts_n_tracks.insert_rail(pos, LeftTurn);
-                },
+                }
                 '+' => {
                     carts_n_tracks.insert_rail(pos, Intersection);
-                },
+                }
                 '^' => {
                     carts_n_tracks.insert_cart(pos, North);
-                },
+                }
                 '>' => {
                     carts_n_tracks.insert_cart(pos, East);
-                },
+                }
                 '<' => {
                     carts_n_tracks.insert_cart(pos, West);
-                },
+                }
                 'v' => {
                     carts_n_tracks.insert_cart(pos, South);
-                },
-                s if s.is_whitespace() => {},
+                }
+                s if s.is_whitespace() => {}
                 _ => panic!("unsupported character {:?} at {}:{}", symbol, y + 1, x + 1),
             }
         }
@@ -828,7 +828,7 @@ pub fn location_of_first_crash(carts_n_tracks: &CartsNTracks) -> Position {
         let move_result = carts_n_tracks.move_carts();
         debug!("{:03}:\n{}", _step, carts_n_tracks);
         match move_result {
-            Moved => {},
+            Moved => {}
             Collision(cart, _) => return cart.position,
             IllegalMove(dir, rail) => panic!("illegal move in {} direction on rail {}", dir, rail),
         }
@@ -844,7 +844,7 @@ pub fn location_of_last_cart(carts_n_tracks: &CartsNTracks) -> Position {
         let move_result = carts_n_tracks.move_carts();
         debug!("{:03}:\n{}", _step, carts_n_tracks);
         match move_result {
-            Moved => {},
+            Moved => {}
             Collision(_, _) => {
                 if carts_n_tracks.carts().len() <= 1 {
                     return carts_n_tracks
@@ -853,7 +853,7 @@ pub fn location_of_last_cart(carts_n_tracks: &CartsNTracks) -> Position {
                         .unwrap_or_else(|| panic!("no cart left"))
                         .position;
                 }
-            },
+            }
             IllegalMove(dir, rail) => panic!("illegal move in {} direction on rail {}", dir, rail),
         }
     }

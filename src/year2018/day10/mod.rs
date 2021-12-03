@@ -206,7 +206,7 @@ pub struct Velocity {
 pub struct Duration(u64);
 
 impl Display for Duration {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}s", self.0)
     }
 }
@@ -288,7 +288,7 @@ impl Sky {
 }
 
 impl Display for Sky {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str("\n")?;
         let star_positions = self.star_positions();
         let (top_left, bottom_right) = self.area();

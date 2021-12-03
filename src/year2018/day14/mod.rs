@@ -96,7 +96,7 @@ use std::{
 pub struct ScoreSeq(Vec<u8>);
 
 impl Display for ScoreSeq {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut formatted = String::with_capacity(21);
         formatted.push('[');
         for score in &self.0 {
@@ -148,7 +148,7 @@ impl FromStr for ScoreSeq {
 pub struct Scoreboard(Vec<u8>);
 
 impl Display for Scoreboard {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut formatted = String::with_capacity(self.0.len() * 3);
         for score in &self.0 {
             formatted.push(char::from(score + 0x30));
@@ -196,7 +196,7 @@ impl Recipes {
     }
 }
 
-impl<'a> Iterator for Recipes {
+impl Iterator for Recipes {
     type Item = u8;
 
     fn next(&mut self) -> Option<Self::Item> {

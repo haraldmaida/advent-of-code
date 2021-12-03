@@ -232,7 +232,7 @@ pub enum Matter {
 }
 
 impl Display for Matter {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let symbol = match *self {
             Sand => ".",
             Clay => "#",
@@ -255,7 +255,7 @@ pub struct Position {
 }
 
 impl Display for Position {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "({},{})", self.x, self.y)
     }
 }
@@ -310,7 +310,7 @@ pub struct Scan {
 }
 
 impl Display for Scan {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         format_tiles(Spring::default().0, &self.tiles, f)
     }
 }
@@ -383,21 +383,21 @@ impl Iterator for WaterCourse {
                             if below.y <= self.max_y {
                                 next_drops.push((below, Down));
                             }
-                        },
+                        }
                         Clay => {
                             self.tiles.insert(c_pos, Water);
                             next_drops.push((c_pos, LeftRight(c_pos.x - 1, c_pos.x + 1)));
-                        },
+                        }
                         Water => {
                             self.tiles.insert(c_pos, Drop);
                             let below_below = Position::new(below.x, below.y + 1);
                             if Some(&Drop) != self.tiles.get(&below_below) {
                                 next_drops.push((below, LeftRight(below.x - 1, below.x + 1)));
                             }
-                        },
-                        Drop => {},
+                        }
+                        Drop => {}
                     }
-                },
+                }
                 LeftRight(left_x, right_x) => {
                     let left = Position::new(left_x, c_pos.y);
                     let right = Position::new(right_x, c_pos.y);
@@ -410,79 +410,79 @@ impl Iterator for WaterCourse {
                             let below_left_matter = *self.tiles.get(&below_left).unwrap_or(&Sand);
                             let below_right_matter = *self.tiles.get(&below_right).unwrap_or(&Sand);
                             match (below_left_matter, below_right_matter) {
-                                (Drop, Drop) | (Sand, Drop) | (Drop, Sand) => {},
+                                (Drop, Drop) | (Sand, Drop) | (Drop, Sand) => {}
                                 (Sand, Sand) => {
                                     self.tiles.insert(left, Water);
                                     self.tiles.insert(right, Water);
                                     next_drops.push((below_left, Down));
                                     next_drops.push((below_right, Down));
-                                },
+                                }
                                 (Sand, _) => {
                                     self.tiles.insert(right, Water);
                                     next_drops.push((c_pos, LeftRight(left.x, right.x + 1)));
-                                },
+                                }
                                 (_, Sand) => {
                                     self.tiles.insert(left, Water);
                                     next_drops.push((c_pos, LeftRight(left.x - 1, right.x)));
-                                },
+                                }
                                 (_, _) => {
                                     self.tiles.insert(left, Water);
                                     self.tiles.insert(right, Water);
                                     next_drops.push((c_pos, LeftRight(left.x - 1, right.x + 1)));
-                                },
+                                }
                             }
-                        },
+                        }
                         (Sand, _) | (Drop, _) => {
                             self.tiles.insert(left, Water);
                             let below_left = Position::new(left.x, c_pos.y + 1);
                             match *self.tiles.get(&below_left).unwrap_or(&Sand) {
-                                Drop => {},
+                                Drop => {}
                                 Sand => {
                                     next_drops.push((below_left, Down));
-                                },
+                                }
                                 Water | Clay => {
                                     next_drops.push((c_pos, LeftRight(left.x - 1, right.x)));
-                                },
+                                }
                             }
-                        },
+                        }
                         (_, Sand) | (_, Drop) => {
                             self.tiles.insert(right, Water);
                             let below_right = Position::new(right.x, c_pos.y + 1);
                             match *self.tiles.get(&below_right).unwrap_or(&Sand) {
-                                Drop => {},
+                                Drop => {}
                                 Sand => {
                                     next_drops.push((below_right, Down));
-                                },
+                                }
                                 Water | Clay => {
                                     next_drops.push((c_pos, LeftRight(left.x, right.x + 1)));
-                                },
+                                }
                             }
-                        },
+                        }
                         (Water, _) => {
                             let below_left = Position::new(left.x, c_pos.y + 1);
                             match *self.tiles.get(&below_left).unwrap_or(&Sand) {
-                                Drop | Sand => {},
+                                Drop | Sand => {}
                                 Water | Clay => {
                                     next_drops.push((c_pos, LeftRight(left.x - 1, right.x)));
-                                },
+                                }
                             }
-                        },
+                        }
                         (_, Water) => {
                             let below_right = Position::new(right.x, c_pos.y + 1);
                             match *self.tiles.get(&below_right).unwrap_or(&Sand) {
-                                Drop | Sand => {},
+                                Drop | Sand => {}
                                 Water | Clay => {
                                     next_drops.push((c_pos, LeftRight(left.x, right.x + 1)));
-                                },
+                                }
                             }
-                        },
+                        }
                         (Clay, Clay) => {
                             let above = Position::new(c_pos.x, c_pos.y - 1);
                             self.tiles.insert(above, Water);
                             next_drops.push((above, LeftRight(c_pos.x - 1, c_pos.x + 1)));
-                        },
+                        }
                     }
-                },
+                }
             }
         }
         self.water.extend(next_drops);
@@ -497,7 +497,7 @@ impl Iterator for WaterCourse {
 }
 
 impl Display for WaterCourse {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         format_tiles(self.spring, &self.tiles, f)
     }
 }
@@ -505,7 +505,7 @@ impl Display for WaterCourse {
 fn format_tiles(
     spring: Position,
     tiles: &HashMap<Position, Matter>,
-    f: &mut fmt::Formatter,
+    f: &mut fmt::Formatter<'_>,
 ) -> fmt::Result {
     let (top_left, bottom_right) = area_of_tiles(tiles.keys());
     for y in 0..=bottom_right.y {
@@ -558,12 +558,12 @@ pub fn parse(input: &str) -> Scan {
                 Value::Xmin => {
                     x_min = number;
                     x_max = number;
-                },
+                }
                 Value::Xmax => x_max = number,
                 Value::Ymin => {
                     y_min = number;
                     y_max = number;
-                },
+                }
                 Value::Ymax => y_max = number,
             }
         };
@@ -582,16 +582,16 @@ pub fn parse(input: &str) -> Scan {
                         Value::Ymin => Value::Ymax,
                         _ => param,
                     }
-                },
+                }
                 ',' => {
                     if !value.is_empty() {
                         save_value(param, &value);
                         value.clear();
                     }
-                },
-                '=' => {},
+                }
+                '=' => {}
                 _ if chr.is_digit(10) => value.push(chr),
-                _ if chr.is_whitespace() => {},
+                _ if chr.is_whitespace() => {}
                 _ => panic!("unexpected character {} in line {}", chr, line),
             }
         }
@@ -601,7 +601,7 @@ pub fn parse(input: &str) -> Scan {
 
             for y in y_min..=y_max {
                 for x in x_min..=x_max {
-                    clay_tiles.insert(Position::new(x, y), Matter::Clay);
+                    clay_tiles.insert(Position::new(x, y), Clay);
                 }
             }
         }

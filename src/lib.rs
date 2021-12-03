@@ -21,9 +21,9 @@
     unused_extern_crates,
     unused_import_braces,
     unused_lifetimes,
-    unused_qualifications,
-    variant_size_differences
+    unused_qualifications
 )]
+//#![warn(variant_size_differences)]
 //#![warn(unused_crate_dependencies)] //TODO uncomment eventually
 //#![warn(missing_docs)] //TODO uncomment eventually
 

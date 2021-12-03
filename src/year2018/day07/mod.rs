@@ -129,7 +129,7 @@ pub type InstructionId = char;
 pub struct Duration(u32);
 
 impl Display for Duration {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}s", self.0)
     }
 }
@@ -206,7 +206,7 @@ impl SubAssign<u32> for Duration {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct InstructionSet {
     duration_offset: Duration,
 }
@@ -279,7 +279,7 @@ impl ExecutionPlan {
         self.prior_map.len()
     }
 
-    pub fn in_order(&self) -> InOrder {
+    pub fn in_order(&self) -> InOrder<'_> {
         InOrder {
             todo: &self.prior_map,
             done: HashSet::with_capacity(self.prior_map.len()),
@@ -290,7 +290,7 @@ impl ExecutionPlan {
         &self,
         number_of_workers: u8,
         instruction_set: InstructionSet,
-    ) -> ExecutionSimulator {
+    ) -> ExecutionSimulator<'_> {
         let number_of_tasks = self.prior_map.len();
         ExecutionSimulator {
             instruction_set,
