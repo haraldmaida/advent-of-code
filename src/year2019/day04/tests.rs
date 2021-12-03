@@ -1,6 +1,6 @@
 use super::*;
 
-const INPUT: &str = include_str!("../../input/2019/day4.txt");
+const INPUT: &str = include_str!("../../../input/2019/day4.txt");
 
 #[test]
 fn parse_range_in_puzzel_input() {

@@ -61,8 +61,8 @@
 //!
 //! [Advent of Code 2019 - Day 1](https://adventofcode.com/2019/day/1)
 
-use crate::day01::fuel::Fuel;
-use crate::day01::mass::Mass;
+use self::fuel::Fuel;
+use self::mass::Mass;
 use std::str::FromStr;
 
 mod mass {
@@ -89,7 +89,7 @@ mod mass {
 }
 
 mod fuel {
-    use crate::day01::mass::Mass;
+    use crate::year2019::day01::mass::Mass;
     use std::fmt::{self, Display};
     use std::ops::{Add, AddAssign};
 

@@ -248,7 +248,7 @@ impl IntcodeVM {
     }
 
     fn panic(&mut self, message: &str) -> Next {
-        error!(target: "IntVM", "{}", message);
+        log::error!(target: "IntVM", "{}", message);
         Next::Halt
     }
 

@@ -1,6 +1,6 @@
 use super::*;
 
-const INPUT: &str = include_str!("../../input/2019/day1.txt");
+const INPUT: &str = include_str!("../../../input/2019/day1.txt");
 
 mod calculate_fuel_for_module {
     use super::*;
@@ -47,7 +47,7 @@ mod part1 {
 
 mod part2 {
     use super::*;
-    use crate::day01::fuel_requirements_incl_fuel_mass;
+    use crate::year2019::day01::fuel_requirements_incl_fuel_mass;
 
     #[test]
     fn example1() {

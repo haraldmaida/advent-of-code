@@ -69,7 +69,7 @@
 //!
 //! [Advent of Code 2019 - Day 3](https://adventofcode.com/2019/day/3)
 
-use crate::day03::wire_grid::{Direction, Distance, Move, Point, Segment};
+use crate::year2019::day03::wire_grid::{Direction, Distance, Move, Point, Segment};
 use std::iter::FromIterator;
 use std::str::FromStr;
 
