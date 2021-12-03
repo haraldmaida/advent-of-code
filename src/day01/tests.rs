@@ -36,3 +36,25 @@ mod part1 {
         assert_eq!(product, 1754);
     }
 }
+
+mod part2 {
+    use super::*;
+
+    #[test]
+    fn count_increased_sums_of_three_measurements_example1() {
+        let report = parse(EXAMPLE1);
+
+        let count = count_increased_sums_of_three_measurements(&report);
+
+        assert_eq!(count, 5)
+    }
+
+    #[test]
+    fn answer() {
+        let report = parse(INPUT);
+
+        let product = count_increased_sums_of_three_measurements(&report);
+
+        assert_eq!(product, 1789);
+    }
+}
