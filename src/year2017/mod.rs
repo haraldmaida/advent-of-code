@@ -18,3 +18,7 @@
 //! you complete the first. Each puzzle grants one star. Good luck!
 //!
 //! [Advent of Code 2017](https://adventofcode.com/2017)
+
+pub mod day01;
+pub mod day02;
+pub mod day03;

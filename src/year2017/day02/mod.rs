@@ -63,6 +63,7 @@
 
 pub type Cell = i32;
 
+#[derive(Debug)]
 pub struct Spreadsheet {
     cells: Vec<Vec<Cell>>,
 }
