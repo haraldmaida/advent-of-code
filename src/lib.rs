@@ -42,6 +42,9 @@ pub mod year2019;
 #[cfg(feature = "event2020")]
 pub mod year2020;
 
+#[cfg(feature = "event2021")]
+pub mod year2021;
+
 #[cfg(feature = "event2015")]
 aoc_lib! { year = 2015 }
 
