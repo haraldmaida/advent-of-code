@@ -29,10 +29,6 @@
 
 #[macro_use]
 extern crate aoc_runner_derive;
-#[macro_use]
-extern crate failure;
-#[macro_use]
-extern crate log;
 
 #[cfg(feature = "event2017")]
 pub mod year2017;

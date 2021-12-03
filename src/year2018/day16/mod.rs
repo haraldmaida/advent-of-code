@@ -426,8 +426,8 @@ fn decode_opcodes(samples: &[Sample]) -> HashMap<OpCode, Mnemonic> {
             .extend(possible_mnemonics(sample));
     }
     while !mnemonics.is_empty() {
-        debug!("{:?}\n", mnemonics);
-        debug!("opcodes: {:?}\n\n", opcodes);
+        log::debug!("{:?}\n", mnemonics);
+        log::debug!("opcodes: {:?}\n\n", opcodes);
         let clarified_opcodes: Vec<(OpCode, Mnemonic)> = mnemonics
             .iter()
             .filter_map(|(&opc, mnes)| {

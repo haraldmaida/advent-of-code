@@ -414,7 +414,7 @@ impl Area {
             let mut area = self;
             for no in 1..=n {
                 area = area.next_generation(top_left, bottom_right);
-                debug!("\n\ngeneration no. {}:\n\n{}", no, area);
+                log::debug!("\n\ngeneration no. {}:\n\n{}", no, area);
             }
             area
         } else {
@@ -435,9 +435,13 @@ impl Area {
                         first_cycle_start = prev;
                         prove = first_cycle_start + repeat_cycle * 4;
                     }
-                    debug!(
+                    log::debug!(
                         "\n\n{} - {} -- ({}, {}):\n\n{}",
-                        no, prev, first_cycle_start, repeat_cycle, area
+                        no,
+                        prev,
+                        first_cycle_start,
+                        repeat_cycle,
+                        area
                     );
                 }
                 if no == break_at_no {

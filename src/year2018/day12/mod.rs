@@ -338,7 +338,7 @@ fn evolve_n_generations(plantation: &Plantation, num_generations: u64) -> (Plant
         }
         plants = next_plants;
 
-        debug!("{}", plants);
+        log::debug!("{}", plants);
     }
     (
         Plantation {

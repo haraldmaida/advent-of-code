@@ -123,6 +123,7 @@
 //!
 //! [Advent of Code 2018 - Day 6](https://adventofcode.com/2018/day/6)
 
+use failure::Fail;
 use std::{
     collections::{HashMap, HashSet},
     fmt::{self, Display},

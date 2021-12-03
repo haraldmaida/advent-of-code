@@ -1112,10 +1112,10 @@ impl Combat {
 
     pub fn fight(&mut self) -> FightResult {
         'fighting: loop {
-            debug!("combat:\n{}", self);
+            log::debug!("combat:\n{}", self);
             let fight = self.fight_one_round();
             if fight != Ongoing {
-                debug!("finished combat:\n{}", self);
+                log::debug!("finished combat:\n{}", self);
                 break 'fighting fight;
             }
         }
@@ -1126,8 +1126,8 @@ impl Combat {
         for _ in 0..number_of_rounds {
             last_result = self.fight_one_round();
         }
-        debug!("|> Elves: {:?}", self.elves);
-        debug!("|> Goblins: {:?}", self.goblins);
+        log::debug!("|> Elves: {:?}", self.elves);
+        log::debug!("|> Goblins: {:?}", self.goblins);
         last_result
     }
 
@@ -1218,9 +1218,10 @@ impl Combat {
         self.elves
             .keys()
             .for_each(|enemy| eventually_add_adjacents_of_enemy(*enemy, &mut targets));
-        debug!(
+        log::debug!(
             "trying to move goblin {} torwards possible targets: {:?}",
-            goblin, targets
+            goblin,
+            targets
         );
 
         self.path_to_nearest_target(goblin, targets)
@@ -1248,9 +1249,10 @@ impl Combat {
         self.goblins
             .keys()
             .for_each(|enemy| eventually_add_adjacents_of_enemy(*enemy, &mut targets));
-        debug!(
+        log::debug!(
             "trying to move elf {} torwards possible targets: {:?}",
-            elf, targets
+            elf,
+            targets
         );
 
         self.path_to_nearest_target(elf, targets)
@@ -1302,7 +1304,7 @@ impl Combat {
     }
 
     fn shortest_path(&self, start: Position, end: Position) -> Vec<Position> {
-        debug!("searching shortest path from {} to {}", start, end);
+        log::debug!("searching shortest path from {} to {}", start, end);
         let heuristic = |a_pos: Position, target: Position| a_pos.manhattan_distance(target);
 
         let mut found_path_start = None;
@@ -1320,10 +1322,10 @@ impl Combat {
         }
 
         'exploring: while let Some(curr_position) = open.pop() {
-            debug!("current position: {:?}", curr_position);
+            log::debug!("current position: {:?}", curr_position);
             distance += 1;
             for a_position in self.adjacent_free_positions(curr_position, start) {
-                debug!("| exploring vertex: {:?}", a_position);
+                log::debug!("| exploring vertex: {:?}", a_position);
                 let a_vertex: &mut Vertex = vertices.entry(a_position).or_insert_with(|| {
                     open.push(a_position);
                     Vertex::default()
@@ -1341,7 +1343,7 @@ impl Combat {
             }
             if curr_position == start {
                 found_path_start = Some(curr_position);
-                debug!("found target position: {:?}", found_path_start);
+                log::debug!("found target position: {:?}", found_path_start);
                 break 'exploring;
             }
             open.sort_unstable_by(|p1, p2| {
@@ -1353,7 +1355,7 @@ impl Combat {
                 }
             });
         }
-        debug!("resulting vertices: {:?}", vertices);
+        log::debug!("resulting vertices: {:?}", vertices);
 
         let mut path: Vec<Position> = Vec::with_capacity(8);
         let mut previous = found_path_start;
@@ -1361,7 +1363,7 @@ impl Combat {
             path.push(position);
             previous = vertices.get(&position).and_then(|v| v.previous);
         }
-        debug!("found path: {:?}", path);
+        log::debug!("found path: {:?}", path);
 
         path
     }
@@ -1417,7 +1419,7 @@ where
 {
     let enemy_died = if let Some(enemy) = enemies.get_mut(&position) {
         *enemy.hit_points_mut() -= attack_power;
-        debug!("attacked {:?}", enemy);
+        log::debug!("attacked {:?}", enemy);
         enemy.hit_points() <= HitPoints::ZERO
     } else {
         false
@@ -1472,21 +1474,23 @@ pub fn fight(combat_map: &Combat) -> i32 {
 fn calculate_outcome(fight_result: FightResult, rounds: u32) -> i32 {
     match fight_result {
         WinnerElves(remaining_hitpoints) => {
-            debug!(
+            log::debug!(
                 "Elves win after {} rounds with {} total hit points left!",
-                rounds, remaining_hitpoints
+                rounds,
+                remaining_hitpoints
             );
             remaining_hitpoints.val() * rounds as i32
         }
         WinnerGoblins(remaining_hitpoints) => {
-            debug!(
+            log::debug!(
                 "Goblins win after {} rounds with {} total hit points left!",
-                rounds, remaining_hitpoints
+                rounds,
+                remaining_hitpoints
             );
             remaining_hitpoints.val() * rounds as i32
         }
         Tie => {
-            debug!("The combat ended with a tie after {} rounds", rounds);
+            log::debug!("The combat ended with a tie after {} rounds", rounds);
             0
         }
         Ongoing => unreachable!(),
@@ -1506,24 +1510,25 @@ fn least_attach_power_for_elves_to_win(initial_combat: Combat) -> (AttackPower, 
     let mut faked_attack_power = AttackPower(4);
     combat.elves_attack_power = faked_attack_power;
     let fight = 'fighting: loop {
-        debug!("combat:\n{}", combat);
+        log::debug!("combat:\n{}", combat);
         let fight = combat.fight_one_round();
         let lost_lives = orig_num_elves - combat.elves.len();
         if lost_lives > 0 {
             faked_attack_power += 1;
             combat = initial_combat.clone();
             combat.elves_attack_power = faked_attack_power;
-            debug!(
+            log::debug!(
                 "elves lost {} lives -> trying with fake power of {}",
-                lost_lives, combat.elves_attack_power
+                lost_lives,
+                combat.elves_attack_power
             );
         }
         if fight != Ongoing {
-            debug!("finished combat:\n{}", combat);
+            log::debug!("finished combat:\n{}", combat);
             break 'fighting fight;
         }
     };
-    info!(
+    log::info!(
         "elves win with faked attack power of {}",
         combat.elves_attack_power
     );

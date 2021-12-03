@@ -16,7 +16,7 @@ mod parse {
     #[test]
     fn parse_example1() {
         let carts_n_tracks = parse(EXAMPLE1_INPUT);
-        debug!("{:?}", carts_n_tracks);
+        log::debug!("{:?}", carts_n_tracks);
         assert_eq!(carts_n_tracks.to_string(), EXAMPLE1_INPUT);
     }
 

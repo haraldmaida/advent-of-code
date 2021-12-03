@@ -370,7 +370,7 @@ impl Iterator for WaterCourse {
     type Item = ();
 
     fn next(&mut self) -> Option<Self::Item> {
-        debug!("{:?}", self.water);
+        log::debug!("{:?}", self.water);
         let num_tiles_before = self.tiles.len();
         let mut next_drops: Vec<(Position, Drops)> = Vec::with_capacity(2);
         for (c_pos, drops) in self.water.drain(0..) {
@@ -613,15 +613,15 @@ pub fn parse(input: &str) -> Scan {
 #[aoc(day17, part1)]
 pub fn num_tiles_flooded_by_water(scan: &Scan) -> usize {
     let (top_left, bottom_right) = scan.area();
-    debug!("{} - {}", top_left, bottom_right);
+    log::debug!("{} - {}", top_left, bottom_right);
     let mut spring = Spring::default();
     spring.0.y = top_left.y - 1;
     let mut water_walker = scan.clone().walk_water_course(spring, bottom_right.y);
-    debug!("{}", water_walker);
+    log::debug!("{}", water_walker);
     while let Some(_) = water_walker.next() {
-        debug!("{}", water_walker);
+        log::debug!("{}", water_walker);
     }
-    debug!("{}", water_walker);
+    log::debug!("{}", water_walker);
     water_walker
         .tiles()
         .iter()
@@ -632,13 +632,13 @@ pub fn num_tiles_flooded_by_water(scan: &Scan) -> usize {
 #[aoc(day17, part2)]
 pub fn num_tiles_flooded_by_water_after_spring_has_run_dry(scan: &Scan) -> usize {
     let (top_left, bottom_right) = scan.area();
-    debug!("{} - {}", top_left, bottom_right);
+    log::debug!("{} - {}", top_left, bottom_right);
     let mut spring = Spring::default();
     spring.0.y = top_left.y - 1;
     let mut water_walker = scan.clone().walk_water_course(spring, bottom_right.y);
-    debug!("{}", water_walker);
+    log::debug!("{}", water_walker);
     while let Some(_) = water_walker.next() {
-        debug!("{}", water_walker);
+        log::debug!("{}", water_walker);
     }
     println!("{}", water_walker);
     water_walker
