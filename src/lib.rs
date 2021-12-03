@@ -42,7 +42,17 @@ pub mod year2019;
 #[cfg(feature = "event2020")]
 pub mod year2020;
 
-#[cfg(feature = "event2021")]
+#[cfg(any(
+    feature = "event2021",
+    not(any(
+        feature = "event2020",
+        feature = "event2019",
+        feature = "event2018",
+        feature = "event2017",
+        feature = "event2016",
+        feature = "event2015"
+    ))
+))]
 pub mod year2021;
 
 #[cfg(feature = "event2015")]
