@@ -14,10 +14,10 @@ keywords = ["advent", "puzzle"]
 event2015 = []
 event2016 = []
 event2017 = []
-event2018 = []
-event2019 = []
-event2020 = []
-event2021 = []
+event2018 = [ "failure", "log" ]
+event2019 = [ "log" ]
+event2020 = [ "hashbrown", "fxhash" ]
+event2021 = [ "bitvec" ]
 
 [lib]
 bench = false
@@ -25,10 +25,11 @@ bench = false
 [dependencies]
 aoc-runner = "0.3"
 aoc-runner-derive = "0.3"
-hashbrown = "0.11"
-failure = "0.1"
-fxhash = "0.2"
-log = { version = "0.4", features = ["release_max_level_info"] }
+bitvec = { version = "0.22", optional = true }
+hashbrown = { version = "0.11", optional = true }
+failure = { version = "0.1", optional = true }
+fxhash = { version = "0.2", optional = true }
+log = { version = "0.4", features = ["release_max_level_info"], optional = true }
 
 [dev-dependencies]
 proptest = "1"
