@@ -1,6 +1,6 @@
 use super::*;
 
-const INPUT: &str = include_str!("../../../../input/2018/day5.txt");
+const INPUT: &str = include_str!("../../../input/2018/day5.txt");
 
 mod part1 {
     use super::*;

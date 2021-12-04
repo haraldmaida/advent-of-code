@@ -1,6 +1,6 @@
 use super::*;
 
-const INPUT: &str = include_str!("../../../../input/2018/day16.txt");
+const INPUT: &str = include_str!("../../../input/2018/day16.txt");
 
 const EXAMPLE1_INPUT: &str = "\
 Before: [3, 2, 1, 1]

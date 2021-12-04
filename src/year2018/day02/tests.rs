@@ -1,6 +1,6 @@
 use super::*;
 
-const INPUT: &str = include_str!("../../../../input/2018/day2.txt");
+const INPUT: &str = include_str!("../../../input/2018/day2.txt");
 
 fn prepare(input: Vec<&str>) -> Vec<String> {
     input.into_iter().map(ToOwned::to_owned).collect()

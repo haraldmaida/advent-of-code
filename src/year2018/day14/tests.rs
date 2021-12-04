@@ -1,6 +1,6 @@
 use super::*;
 
-const INPUT: &str = include_str!("../../../../input/2018/day14.txt");
+const INPUT: &str = include_str!("../../../input/2018/day14.txt");
 
 mod score_seq {
     use super::*;
