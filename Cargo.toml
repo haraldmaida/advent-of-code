@@ -18,6 +18,7 @@ event2018 = [ "failure", "log" ]
 event2019 = [ "log" ]
 event2020 = [ "hashbrown", "fxhash" ]
 event2021 = [ "bitvec" ]
+default = [ "bitvec" ]
 
 [lib]
 bench = false
