@@ -61,3 +61,25 @@ mod part1 {
         assert_eq!(power_consumption, 1071734);
     }
 }
+
+mod part2 {
+    use super::*;
+
+    #[test]
+    fn life_support_rating_example1() {
+        let diagnostic_report = parse(EXAMPLE1);
+
+        let life_support_rating = life_support_rating(&diagnostic_report);
+
+        assert_eq!(life_support_rating, 230);
+    }
+
+    #[test]
+    fn answer() {
+        let diagnostic_report = parse(INPUT);
+
+        let life_support_rating = life_support_rating(&diagnostic_report);
+
+        assert_eq!(life_support_rating, 6124992);
+    }
+}
