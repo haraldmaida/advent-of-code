@@ -87,3 +87,25 @@ mod part1 {
         assert_eq!(score, 10374);
     }
 }
+
+mod part2 {
+    use super::*;
+
+    #[test]
+    fn score_of_last_winning_board_example1() {
+        let game = parse(EXAMPLE1);
+
+        let score = score_of_last_winning_board(&game);
+
+        assert_eq!(score, 1924);
+    }
+
+    #[test]
+    fn answer() {
+        let game = parse(INPUT);
+
+        let score = score_of_last_winning_board(&game);
+
+        assert_eq!(score, 24742);
+    }
+}

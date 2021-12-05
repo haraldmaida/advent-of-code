@@ -83,6 +83,24 @@
 //! To guarantee victory against the giant squid, figure out which board will
 //! win first. What will your final score be if you choose that board?
 //!
+//! ## Part Two
+//!
+//! On the other hand, it might be wise to try a different strategy: let the
+//! giant squid win.
+//!
+//! You aren't sure how many bingo boards a giant squid could play at once, so
+//! rather than waste time counting its arms, the safe thing to do is to figure
+//! out which board will win last and choose that one. That way, no matter which
+//! boards it picks, it will win for sure.
+//!
+//! In the above example, the second board is the last to win, which happens
+//! after 13 is eventually called and its middle column is completely marked.
+//! If you were to keep playing until this point, the second board would have a
+//! sum of unmarked numbers equal to 148 for a final score of `148 * 13 = 1924`.
+//!
+//! Figure out which board will win last. Once it wins, what would its final
+//! score be?
+//!
 //! [Advent of Code 2021 - Day 4](https://adventofcode.com/2021/day/4)
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -154,9 +172,10 @@ impl Board {
 
     pub fn is_bingo(&self) -> bool {
         (0..Board::NUM_ROWS).any(|row| {
-            !(0..Board::ROW_LEN).any(|col| !self.cells[row * Board::ROW_LEN + col].is_marked())
+            let row_offset = row * Board::ROW_LEN;
+            (0..Board::ROW_LEN).all(|col| self.cells[row_offset + col].is_marked())
         }) || (0..Board::ROW_LEN).any(|col| {
-            !(0..Board::NUM_ROWS).any(|row| !self.cells[col + row * Board::ROW_LEN].is_marked())
+            (0..Board::NUM_ROWS).all(|row| self.cells[col + row * Board::ROW_LEN].is_marked())
         })
     }
 
@@ -237,11 +256,33 @@ pub fn score_of_first_winning_board(game: &Game) -> u32 {
         for board in &mut boards {
             board.check_number(number);
             if board.is_bingo() {
-                dbg!(&winning_board);
                 winning_board = Some((number, board.clone()));
                 break 'bingo;
             }
         }
+    }
+    winning_board
+        .map(|(last_number, board)| board.score(last_number))
+        .expect("no winning board at all!")
+}
+
+#[aoc(day4, part2)]
+pub fn score_of_last_winning_board(game: &Game) -> u32 {
+    let mut winning_board = None;
+    let mut winners = Vec::new();
+    let mut boards = game.boards.clone();
+    for &number in &game.drawn_numbers {
+        for (idx, board) in boards.iter_mut().enumerate() {
+            let marked = board.check_number(number);
+            if marked.is_some() && board.is_bingo() {
+                winners.push(idx);
+            }
+        }
+        winners.sort_by(|a, b| b.cmp(a));
+        for &index in &winners {
+            winning_board = Some((number, boards.remove(index)));
+        }
+        winners.clear();
     }
     winning_board
         .map(|(last_number, board)| board.score(last_number))
