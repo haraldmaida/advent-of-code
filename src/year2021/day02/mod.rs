@@ -83,6 +83,7 @@
 //! [Advent of Code 2021 - Day 2](https://adventofcode.com/2021/day/2)
 
 use std::num::ParseIntError;
+use std::str::FromStr;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Move {
@@ -102,27 +103,28 @@ pub fn parse(input: &str) -> Vec<Move> {
         .enumerate()
         .filter(|(_, line)| !line.is_empty())
         .map(|(index, line)| {
-            parse_move(line).unwrap_or_else(|err| panic!("line {}: {}", index + 1, err))
+            line.parse()
+                .unwrap_or_else(|err| panic!("line {}: {}", index + 1, err))
         })
         .collect()
 }
 
-fn parse_move(line: &str) -> Result<Move, String> {
-    let parts: Vec<_> = line.split_whitespace().collect();
-    let amount_str = parts
-        .get(1)
-        .ok_or_else(|| format!("invalid command: amount is missing"))?;
-    let amount = amount_str
-        .parse()
-        .map_err(|err: ParseIntError| err.to_string())?;
-    let direction_str = parts
-        .get(0)
-        .ok_or_else(|| format!("invalid command: no direction given"))?;
-    match *direction_str {
-        "forward" => Ok(Move::Forward(amount)),
-        "up" => Ok(Move::Up(amount)),
-        "down" => Ok(Move::Down(amount)),
-        _ => Err(format!("unknown direction: {}", direction_str)),
+impl FromStr for Move {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let (head, tail) = s
+            .split_once(' ')
+            .ok_or_else(|| format!("invalid command: {}", &s))?;
+
+        let amount = tail.parse().map_err(|err: ParseIntError| err.to_string())?;
+
+        match head {
+            "forward" => Ok(Move::Forward(amount)),
+            "up" => Ok(Move::Up(amount)),
+            "down" => Ok(Move::Down(amount)),
+            _ => Err(format!("unknown direction: {}", head)),
+        }
     }
 }
 
