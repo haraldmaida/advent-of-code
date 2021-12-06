@@ -19,10 +19,10 @@ mod part1 {
     use super::*;
 
     #[test]
-    fn count_points_at_least_two_lines_overlap_example1() {
+    fn count_points_horizontal_and_vertical_lines_overlap_example1() {
         let vent_lines = parse(EXAMPLE1);
 
-        let count = count_points_at_least_two_lines_overlap(&vent_lines);
+        let count = count_points_horizontal_and_vertical_lines_overlap(&vent_lines);
 
         assert_eq!(count, 5);
     }
@@ -31,8 +31,30 @@ mod part1 {
     fn answer() {
         let vent_lines = parse(INPUT);
 
-        let count = count_points_at_least_two_lines_overlap(&vent_lines);
+        let count = count_points_horizontal_and_vertical_lines_overlap(&vent_lines);
 
         assert_eq!(count, 7269);
+    }
+}
+
+mod part2 {
+    use super::*;
+
+    #[test]
+    fn count_points_two_lines_overlap_example1() {
+        let vent_lines = parse(EXAMPLE1);
+
+        let count = count_points_two_lines_overlap(&vent_lines);
+
+        assert_eq!(count, 12);
+    }
+
+    #[test]
+    fn answer() {
+        let vent_lines = parse(INPUT);
+
+        let count = count_points_two_lines_overlap(&vent_lines);
+
+        assert_eq!(count, 21140);
     }
 }

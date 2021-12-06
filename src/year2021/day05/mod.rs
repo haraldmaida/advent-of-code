@@ -60,9 +60,38 @@
 //! Consider only horizontal and vertical lines. At how many points do at least
 //! two lines overlap?
 //!
+//! ## Part Two
+//!
+//! Unfortunately, considering only horizontal and vertical lines doesn't give
+//! you the full picture; you need to also consider diagonal lines.
+//!
+//! Because of the limits of the hydrothermal vent mapping system, the lines in
+//! your list will only ever be horizontal, vertical, or a diagonal line at
+//! exactly 45 degrees. In other words:
+//!
+//! - An entry like 1,1 -> 3,3 covers points 1,1, 2,2, and 3,3.
+//! - An entry like 9,7 -> 7,9 covers points 9,7, 8,8, and 7,9.
+//!
+//! Considering all lines from the above example would now produce the following diagram:
+//!
+//! 1.1....11.
+//! .111...2..
+//! ..2.1.111.
+//! ...1.2.2..
+//! .112313211
+//! ...1.2....
+//! ..1...1...
+//! .1.....1..
+//! 1.......1.
+//! 222111....
+//! You still need to determine the number of points where at least two lines overlap. In the above example, this is still anywhere in the diagram with a 2 or larger - now a total of 12 points.
+//!
+//! Consider all of the lines. At how many points do at least two lines overlap?
+//!
 //! [Advent of Code 2021 - Day 5](https://adventofcode.com/2021/day/5)
 
 use hashbrown::HashSet;
+use std::collections::HashMap;
 use std::str::FromStr;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -110,6 +139,61 @@ impl LineSegment {
 
     pub fn is_vertical(&self) -> bool {
         self.start.x == self.end.x
+    }
+
+    pub fn points(&self) -> LinePoints {
+        LinePoints::new(self.start, self.end)
+    }
+}
+
+#[allow(missing_copy_implementations)]
+#[derive(Debug)]
+pub struct LinePoints {
+    end_x: i32,
+    end_y: i32,
+    step_x: i32,
+    step_y: i32,
+    x: i32,
+    y: i32,
+}
+
+impl LinePoints {
+    fn new(start: Point, end: Point) -> Self {
+        let step_x = (end.x - start.x).signum();
+        let step_y = (end.y - start.y).signum();
+        Self {
+            end_x: end.x,
+            end_y: end.y,
+            step_x,
+            step_y,
+            x: start.x,
+            y: start.y,
+        }
+    }
+}
+
+impl Iterator for LinePoints {
+    type Item = Point;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let x = self.x;
+        let y = self.y;
+
+        self.x += self.step_x;
+        self.y += self.step_y;
+
+        let x_in_range = self.step_x.signum() == 0
+            || (self.step_x.signum() > 0 && x <= self.end_x)
+            || (self.step_x.signum() < 0 && x >= self.end_x);
+        let y_in_range = self.step_y.signum() == 0
+            || (self.step_y.signum() > 0 && y <= self.end_y)
+            || (self.step_y.signum() < 0 && y >= self.end_y);
+
+        if x_in_range && y_in_range {
+            Some(Point { x, y })
+        } else {
+            None
+        }
     }
 }
 
@@ -217,7 +301,7 @@ pub fn parse(input: &str) -> Vec<LineSegment> {
 }
 
 #[aoc(day5, part1)]
-pub fn count_points_at_least_two_lines_overlap(vent_lines: &[LineSegment]) -> usize {
+pub fn count_points_horizontal_and_vertical_lines_overlap(vent_lines: &[LineSegment]) -> usize {
     let mut intersections = HashSet::new();
     for (idx, line1) in vent_lines.iter().enumerate() {
         for line2 in vent_lines.iter().skip(idx + 1) {
@@ -225,6 +309,22 @@ pub fn count_points_at_least_two_lines_overlap(vent_lines: &[LineSegment]) -> us
         }
     }
     intersections.len()
+}
+
+fn point_map_of_line_segments(line_segments: &[LineSegment]) -> HashMap<Point, usize> {
+    let mut point_map = HashMap::new();
+    for line in line_segments {
+        for point in line.points() {
+            *point_map.entry(point).or_insert(0) += 1;
+        }
+    }
+    point_map
+}
+
+#[aoc(day5, part2)]
+pub fn count_points_two_lines_overlap(vent_lines: &[LineSegment]) -> usize {
+    let point_map = point_map_of_line_segments(vent_lines);
+    point_map.values().filter(|count| **count >= 2).count()
 }
 
 #[cfg(test)]
