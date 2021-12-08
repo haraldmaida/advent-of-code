@@ -27,3 +27,25 @@ mod part1 {
         assert_eq!(count, 396210);
     }
 }
+
+mod part2 {
+    use super::*;
+
+    #[test]
+    fn count_lanternfish_after_256_days_example1() {
+        let population = parse(EXAMPLE1);
+
+        let count = count_lanternfish_after_256_days(&population);
+
+        assert_eq!(count, 26984457539);
+    }
+
+    #[test]
+    fn answer() {
+        let population = parse(INPUT);
+
+        let count = count_lanternfish_after_256_days(&population);
+
+        assert_eq!(count, 1770823541496);
+    }
+}

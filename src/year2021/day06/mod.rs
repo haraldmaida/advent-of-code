@@ -79,11 +79,23 @@
 //! Find a way to simulate lanternfish. How many lanternfish would there be
 //! after 80 days?
 //!
+//! # Part Two
+//!
+//! Suppose the lanternfish live forever and have unlimited food and space.
+//! Would they take over the entire ocean?
+//!
+//! After 256 days in the example above, there would be a total of 26984457539
+//! lanternfish!
+//!
+//! How many lanternfish would there be after 256 days?
+//!
 //! [Advent of Code 2021 - Day 6](https://adventofcode.com/2021/day/6)
 
+use hashbrown::HashMap;
+use std::mem;
 use std::str::FromStr;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Age(pub u8);
 
 impl Default for Age {
@@ -103,7 +115,7 @@ impl FromStr for Age {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Population(Vec<Age>);
+pub struct Population(HashMap<Age, usize>);
 
 impl Population {
     pub fn simulate(&self) -> LanternfishSimulator {
@@ -111,13 +123,17 @@ impl Population {
     }
 
     pub fn size(&self) -> usize {
-        self.0.len()
+        self.0.values().sum()
     }
 }
 
 impl From<Vec<Age>> for Population {
     fn from(values: Vec<Age>) -> Self {
-        Population(values)
+        let mut age_map = HashMap::new();
+        for age in values {
+            *age_map.entry(age).or_insert(0) += 1;
+        }
+        Population(age_map)
     }
 }
 
@@ -136,17 +152,14 @@ impl Iterator for LanternfishSimulator {
     type Item = Population;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let mut newborn = 0;
-        for Age(age) in &mut self.population.0 {
-            if *age == 0 {
-                *age = 6;
-                newborn += 1;
+        let population = mem::replace(&mut self.population.0, HashMap::with_capacity(9));
+        for (age, count) in population.into_iter() {
+            if age == Age(0) {
+                *self.population.0.entry(Age(6)).or_insert(0) += count;
+                *self.population.0.entry(Age(8)).or_insert(0) += count;
             } else {
-                *age -= 1;
+                *self.population.0.entry(Age(age.0 - 1)).or_insert(0) += count;
             }
-        }
-        for _ in 0..newborn {
-            self.population.0.push(Age::default());
         }
         Some(self.population.clone())
     }
@@ -174,6 +187,16 @@ pub fn count_lanternfish_after_80_days(population: &Population) -> usize {
         .take(80)
         .last()
         .expect("no population after 80 days")
+        .size()
+}
+
+#[aoc(day6, part2)]
+pub fn count_lanternfish_after_256_days(population: &Population) -> usize {
+    population
+        .simulate()
+        .take(256)
+        .last()
+        .expect("no population after 256 days")
         .size()
 }
 
