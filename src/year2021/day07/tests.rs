@@ -10,10 +10,10 @@ mod part1 {
     use super::*;
 
     #[test]
-    fn least_amount_of_fuel_example1() {
+    fn least_amount_of_fuel_linear_example1() {
         let positions = parse(EXAMPLE1);
 
-        let fuel_consumption = least_amount_of_fuel(&positions);
+        let fuel_consumption = least_amount_of_fuel_linear(&positions);
 
         assert_eq!(fuel_consumption, 37);
     }
@@ -22,8 +22,30 @@ mod part1 {
     fn answer() {
         let population = parse(INPUT);
 
-        let fuel_consumption = least_amount_of_fuel(&population);
+        let fuel_consumption = least_amount_of_fuel_linear(&population);
 
         assert_eq!(fuel_consumption, 329389);
+    }
+}
+
+mod part2 {
+    use super::*;
+
+    #[test]
+    fn least_amount_of_fuel_exponential_example1() {
+        let positions = parse(EXAMPLE1);
+
+        let fuel_consumption = least_amount_of_fuel_exponential(&positions);
+
+        assert_eq!(fuel_consumption, 168);
+    }
+
+    #[test]
+    fn answer() {
+        let population = parse(INPUT);
+
+        let fuel_consumption = least_amount_of_fuel_exponential(&population);
+
+        assert_eq!(fuel_consumption, 86397080);
     }
 }
