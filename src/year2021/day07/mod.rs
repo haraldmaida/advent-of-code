@@ -86,8 +86,6 @@
 //!
 //! [Advent of Code 2021 - Day 7](https://adventofcode.com/2021/day/7)
 
-use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
-
 #[aoc_generator(day7)]
 pub fn parse(input: &str) -> Vec<i32> {
     input
@@ -119,7 +117,8 @@ pub fn least_amount_of_fuel_linear(positions: &[i32]) -> i32 {
 }
 
 fn fuel(a: i32, b: i32) -> i32 {
-    (1..=(a - b).abs()).fold(0, |acc, step| acc + step)
+    let distance = distance(a, b);
+    distance * (distance + 1) / 2
 }
 
 #[aoc(day7, part2)]
@@ -128,7 +127,7 @@ pub fn least_amount_of_fuel_exponential(positions: &[i32]) -> i32 {
     let max = *positions.iter().max().expect("no position given");
     let mut min_fuel = i32::MAX;
     for mid_point in min..=max {
-        let fuel = positions.par_iter().map(|pos| fuel(*pos, mid_point)).sum();
+        let fuel = positions.iter().map(|pos| fuel(*pos, mid_point)).sum();
         if fuel < min_fuel {
             min_fuel = fuel;
         }
