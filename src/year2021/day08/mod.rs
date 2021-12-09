@@ -112,17 +112,157 @@
 //!
 //! In the output values, how many times do digits 1, 4, 7, or 8 appear?
 //!
+//! ## Part Two
+//!
+//! Through a little deduction, you should now be able to determine the
+//! remaining digits. Consider again the first example above:
+//!
+//! ```text
+//! acedgfb cdfbe gcdfa fbcad dab cefabd cdfgeb eafb cagedb ab |
+//! cdfeb fcadb cdfeb cdbaf
+//! ```
+//!
+//! After some careful analysis, the mapping between signal wires and segments
+//! only make sense in the following configuration:
+//!
+//! ```text
+//!  dddd
+//! e    a
+//! e    a
+//!  ffff
+//! g    b
+//! g    b
+//!  cccc
+//! ```
+//!
+//! So, the unique signal patterns would correspond to the following digits:
+//!
+//! - acedgfb: 8
+//! - cdfbe: 5
+//! - gcdfa: 2
+//! - fbcad: 3
+//! - dab: 7
+//! - cefabd: 9
+//! - cdfgeb: 6
+//! - eafb: 4
+//! - cagedb: 0
+//! - ab: 1
+//!
+//! Then, the four digits of the output value can be decoded:
+//!
+//! - cdfeb: 5
+//! - fcadb: 3
+//! - cdfeb: 5
+//! - cdbaf: 3
+//!
+//! Therefore, the output value for this entry is 5353.
+//!
+//! Following this same process for each entry in the second, larger example
+//! above, the output value of each entry can be determined:
+//!
+//! - fdgacbe cefdb cefbgd gcbe: 8394
+//! - fcgedb cgb dgebacf gc: 9781
+//! - cg cg fdcagb cbg: 1197
+//! - efabcd cedba gadfec cb: 9361
+//! - gecf egdcabf bgf bfgea: 4873
+//! - gebdcfa ecba ca fadegcb: 8418
+//! - cefg dcbef fcge gbcadfe: 4548
+//! - ed bcgafe cdgba cbgef: 1625
+//! - gbdfcae bgc cg cgb: 8717
+//! - fgae cfgab fg bagce: 4315
+//!
+//! Adding all of the output values in this larger example produces 61229.
+//!
+//! For each entry, determine all of the wire/segment connections and decode
+//! the four-digit output values. What do you get if you add up all of the
+//! output values?
+//!
 //! [Advent of Code 2021 - Day 8](https://adventofcode.com/2021/day/8)
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+use hashbrown::HashSet;
+use itertools::Itertools;
+use std::collections::HashMap;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Digit {
     segments: [bool; 7],
 }
 
+pub const ZERO: Digit = Digit {
+    segments: [true, true, true, false, true, true, true],
+};
+
+pub const ONE: Digit = Digit {
+    segments: [false, false, true, false, false, true, false],
+};
+
+pub const TWO: Digit = Digit {
+    segments: [true, false, true, true, true, false, true],
+};
+
+pub const THREE: Digit = Digit {
+    segments: [true, false, true, true, false, true, true],
+};
+
+pub const FOUR: Digit = Digit {
+    segments: [false, true, true, true, false, true, false],
+};
+
+pub const FIVE: Digit = Digit {
+    segments: [true, true, false, true, false, true, true],
+};
+
+pub const SIX: Digit = Digit {
+    segments: [true, true, false, true, true, true, true],
+};
+
+pub const SEVEN: Digit = Digit {
+    segments: [true, false, true, false, false, true, false],
+};
+
+pub const EIGHT: Digit = Digit {
+    segments: [true, true, true, true, true, true, true],
+};
+
+pub const NINE: Digit = Digit {
+    segments: [true, true, true, true, false, true, true],
+};
+
+pub const DIGITS: [Digit; 10] = [ZERO, ONE, TWO, THREE, FOUR, FIVE, SIX, SEVEN, EIGHT, NINE];
+
+impl Digit {
+    pub fn to_i64(self) -> i64 {
+        match self {
+            ZERO => 0,
+            ONE => 1,
+            TWO => 2,
+            THREE => 3,
+            FOUR => 4,
+            FIVE => 5,
+            SIX => 6,
+            SEVEN => 7,
+            EIGHT => 8,
+            NINE => 9,
+            _ => panic!("invalid digit"),
+        }
+    }
+}
+
+impl From<[bool; 7]> for Digit {
+    fn from(values: [bool; 7]) -> Self {
+        Self { segments: values }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Signal {
+    segments: [Option<char>; 7],
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Pattern {
-    pub signals: [String; 10],
-    pub display: [String; 4],
+    pub signals: [HashSet<char>; 10],
+    pub display: [HashSet<char>; 4],
 }
 
 #[aoc_generator(day8)]
@@ -134,23 +274,23 @@ pub fn parse(input: &str) -> Vec<Pattern> {
             let (head, tail) = line.split_once('|').expect("not a valid input line");
             let mut signals_iter = head.split_whitespace();
             let signals = [
-                signals_iter.next().unwrap().to_string(),
-                signals_iter.next().unwrap().to_string(),
-                signals_iter.next().unwrap().to_string(),
-                signals_iter.next().unwrap().to_string(),
-                signals_iter.next().unwrap().to_string(),
-                signals_iter.next().unwrap().to_string(),
-                signals_iter.next().unwrap().to_string(),
-                signals_iter.next().unwrap().to_string(),
-                signals_iter.next().unwrap().to_string(),
-                signals_iter.next().unwrap().to_string(),
+                HashSet::from_iter(signals_iter.next().unwrap().chars()),
+                HashSet::from_iter(signals_iter.next().unwrap().chars()),
+                HashSet::from_iter(signals_iter.next().unwrap().chars()),
+                HashSet::from_iter(signals_iter.next().unwrap().chars()),
+                HashSet::from_iter(signals_iter.next().unwrap().chars()),
+                HashSet::from_iter(signals_iter.next().unwrap().chars()),
+                HashSet::from_iter(signals_iter.next().unwrap().chars()),
+                HashSet::from_iter(signals_iter.next().unwrap().chars()),
+                HashSet::from_iter(signals_iter.next().unwrap().chars()),
+                HashSet::from_iter(signals_iter.next().unwrap().chars()),
             ];
             let mut display_iter = tail.split_whitespace();
             let display = [
-                display_iter.next().unwrap().to_string(),
-                display_iter.next().unwrap().to_string(),
-                display_iter.next().unwrap().to_string(),
-                display_iter.next().unwrap().to_string(),
+                HashSet::from_iter(display_iter.next().unwrap().chars()),
+                HashSet::from_iter(display_iter.next().unwrap().chars()),
+                HashSet::from_iter(display_iter.next().unwrap().chars()),
+                HashSet::from_iter(display_iter.next().unwrap().chars()),
             ];
             Pattern { signals, display }
         })
@@ -166,10 +306,69 @@ pub fn count_digits_1_4_7_8(pattern_list: &[Pattern]) -> usize {
                 .display
                 .iter()
                 .filter(|digit| {
-                    let chars_count = digit.chars().count();
+                    let chars_count = digit.len();
                     chars_count == 2 || chars_count == 3 || chars_count == 4 || chars_count == 7
                 })
                 .count()
+        })
+        .sum()
+}
+
+fn signal_segment_map(wires: impl IntoIterator<Item = char>) -> HashMap<char, usize> {
+    HashMap::from_iter(wires.into_iter().enumerate().map(|(i, c)| (c, i)))
+}
+
+fn digit_for_signal(
+    signal: &HashSet<char>,
+    signal_segment_map: &HashMap<char, usize>,
+) -> Option<Digit> {
+    let mut digit = [false; 7];
+    for c in signal {
+        let i = *signal_segment_map.get(&c).unwrap();
+        digit[i] = true;
+    }
+    let digit = Digit::from(digit);
+    DIGITS.iter().find(|valid| digit == **valid).copied()
+}
+
+fn decode_signals(signals: &[HashSet<char>]) -> HashMap<char, usize> {
+    let mut found_mapping = None;
+    let one_signal = signals.iter().find(|signal| signal.len() == 2).unwrap();
+    let seven_signal = signals.iter().find(|signal| signal.len() == 3).unwrap();
+    let char0 = *seven_signal.difference(one_signal).next().unwrap();
+    let mut all_wires = vec!['a', 'b', 'c', 'd', 'e', 'f', 'g'];
+    let char0_pos = all_wires.iter().position(|c| *c == char0).unwrap();
+    all_wires.remove(char0_pos);
+    let k_value = all_wires.len();
+    for mut wires in all_wires.into_iter().permutations(k_value) {
+        wires.insert(0, char0);
+        let mapping = signal_segment_map(wires);
+        if signals
+            .iter()
+            .all(|signal| digit_for_signal(signal, &mapping).is_some())
+        {
+            found_mapping = Some(mapping);
+            break;
+        }
+    }
+    found_mapping.expect("no valid mapping found")
+}
+
+#[aoc(day8, part2)]
+pub fn sum_output_values(pattern_list: &[Pattern]) -> i64 {
+    pattern_list
+        .iter()
+        .map(|pattern| {
+            let mapping = decode_signals(&pattern.signals);
+            pattern
+                .display
+                .iter()
+                .rev()
+                .map(|signal| digit_for_signal(signal, &mapping).expect("signal not in mapping"))
+                .enumerate()
+                .fold(0, |acc, (i, digit)| {
+                    acc + (digit.to_i64() * 10_i64.pow(i as u32))
+                })
         })
         .sum()
 }

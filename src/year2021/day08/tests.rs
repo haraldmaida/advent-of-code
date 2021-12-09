@@ -15,24 +15,78 @@ egadfb cdbfeg cegd fecab cgb gbdefca cg fgcdab egfdb bfceg | gbdfcae bgc cg cgb
 gcafb gcf dcaebfg ecagb gf abcdeg gaef cafbge fdbac fegbdc | fgae cfgab fg bagce
 ";
 
+const EXAMPLE2: &str =
+    "acedgfb cdfbe gcdfa fbcad dab cefabd cdfgeb eafb cagedb ab | cdfeb fcadb cdfeb cdbaf";
+
 mod part1 {
     use super::*;
 
     #[test]
-    fn least_amount_of_fuel_linear_example1() {
-        let pattern = parse(EXAMPLE1);
+    fn count_digits_1_4_7_8_example1() {
+        let pattern_list = parse(EXAMPLE1);
 
-        let count = count_digits_1_4_7_8(&pattern);
+        let count = count_digits_1_4_7_8(&pattern_list);
 
         assert_eq!(count, 26);
     }
 
     #[test]
     fn answer() {
-        let pattern = parse(INPUT);
+        let pattern_list = parse(INPUT);
 
-        let count = count_digits_1_4_7_8(&pattern);
+        let count = count_digits_1_4_7_8(&pattern_list);
 
         assert_eq!(count, 272);
+    }
+}
+
+mod part2 {
+    use super::*;
+
+    #[test]
+    fn decode_signals_example2() {
+        let pattern = parse(EXAMPLE2).iter().next().unwrap().clone();
+
+        let mapping = decode_signals(&pattern.signals);
+
+        assert_eq!(
+            mapping,
+            HashMap::from_iter([
+                ('g', 4),
+                ('c', 6),
+                ('d', 0),
+                ('e', 1),
+                ('f', 3),
+                ('a', 2),
+                ('b', 5)
+            ])
+        );
+    }
+
+    #[test]
+    fn sum_output_values_example2() {
+        let pattern = parse(EXAMPLE2);
+
+        let output_sum = sum_output_values(&pattern);
+
+        assert_eq!(output_sum, 5353);
+    }
+
+    #[test]
+    fn sum_output_values_example1() {
+        let pattern_list = parse(EXAMPLE1);
+
+        let output_sum = sum_output_values(&pattern_list);
+
+        assert_eq!(output_sum, 61229);
+    }
+
+    #[test]
+    fn answer() {
+        let pattern_list = parse(INPUT);
+
+        let output_sum = sum_output_values(&pattern_list);
+
+        assert_eq!(output_sum, 1007675);
     }
 }
