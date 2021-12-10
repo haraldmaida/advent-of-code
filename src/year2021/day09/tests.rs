@@ -17,17 +17,39 @@ mod part1 {
     fn sum_risk_level_at_low_points_example1() {
         let heightmap = parse(EXAMPLE1);
 
-        let count = sum_risk_level_at_low_points(&heightmap);
+        let result = sum_risk_level_at_low_points(&heightmap);
 
-        assert_eq!(count, 15);
+        assert_eq!(result, 15);
     }
 
     #[test]
     fn answer() {
         let heightmap = parse(INPUT);
 
-        let count = sum_risk_level_at_low_points(&heightmap);
+        let result = sum_risk_level_at_low_points(&heightmap);
 
-        assert_eq!(count, 500);
+        assert_eq!(result, 500);
+    }
+}
+
+mod part2 {
+    use super::*;
+
+    #[test]
+    fn multiply_size_of_three_largest_basins_example1() {
+        let heightmap = parse(EXAMPLE1);
+
+        let result = multiply_size_of_three_largest_basins(&heightmap);
+
+        assert_eq!(result, 1134);
+    }
+
+    #[test]
+    fn answer() {
+        let heightmap = parse(INPUT);
+
+        let result = multiply_size_of_three_largest_basins(&heightmap);
+
+        assert_eq!(result, 970200);
     }
 }
