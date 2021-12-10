@@ -36,3 +36,25 @@ mod part1 {
         assert_eq!(result, 362271);
     }
 }
+
+mod part2 {
+    use super::*;
+
+    #[test]
+    fn total_auto_complete_score_example1() {
+        let code_lines = parse(EXAMPLE1);
+
+        let result = total_auto_complete_score(&code_lines);
+
+        assert_eq!(result, 288957);
+    }
+
+    #[test]
+    fn answer() {
+        let code_lines = parse(INPUT);
+
+        let result = total_auto_complete_score(&code_lines);
+
+        assert_eq!(result, 1698395182);
+    }
+}

@@ -80,9 +80,67 @@
 //! Find the first illegal character in each corrupted line of the navigation
 //! subsystem. What is the total syntax error score for those errors?
 //!
+//! ## Part Two
+//!
+//! Now, discard the corrupted lines. The remaining lines are incomplete.
+//!
+//! Incomplete lines don't have any incorrect characters - instead, they're
+//! missing some closing characters at the end of the line. To repair the
+//! navigation subsystem, you just need to figure out the sequence of closing
+//! characters that complete all open chunks in the line.
+//!
+//! You can only use closing characters (`)`, `]`, `}`, or `>`), and you must
+//! add them in the correct order so that only legal pairs are formed and all
+//! chunks end up closed.
+//!
+//! In the example above, there are five incomplete lines:
+//!
+//! `[({(<(())[]>[[{[]{<()<>>` - Complete by adding }}]])})].
+//! `[(()[<>])]({[<{<<[]>>(` - Complete by adding )}>]}).
+//! `(((({<>}<{<{<>}{[]{[]{}` - Complete by adding }}>}>)))).
+//! `{<[[]]>}<{[{[{[]{()[[[]` - Complete by adding ]]}}]}]}>.
+//! `<{([{{}}[<[[[<>{}]]]>[]]` - Complete by adding ])}>.
+//!
+//! Did you know that autocomplete tools also have contests? It's true! The
+//! score is determined by considering the completion string
+//! character-by-character. Start with a total score of 0. Then, for each
+//! character, multiply the total score by 5 and then increase the total score
+//! by the point value given for the character in the following table:
+//!
+//! - `)`: 1 point.
+//! - `]`: 2 points.
+//! - `}`: 3 points.
+//! - `>`: 4 points.
+//!
+//! So, the last completion string above - `])}>` - would be scored as follows:
+//!
+//! - Start with a total score of 0.
+//! - Multiply the total score by 5 to get 0, then add the value of ] (2) to get
+//!   a new total score of 2.
+//! - Multiply the total score by 5 to get 10, then add the value of ) (1) to
+//!   get a new total score of 11.
+//! - Multiply the total score by 5 to get 55, then add the value of } (3) to
+//!   get a new total score of 58.
+//! - Multiply the total score by 5 to get 290, then add the value of > (4) to
+//!   get a new total score of 294.
+//!
+//! The five lines' completion strings have total scores as follows:
+//!
+//! - `}}]])})]` - 288957 total points.
+//! - `)}>]})` - 5566 total points.
+//! - `}}>}>))))` - 1480781 total points.
+//! - `]]}}]}]}>` - 995444 total points.
+//! - `])}>` - 294 total points.
+//!
+//! Autocomplete tools are an odd bunch: the winner is found by sorting all of
+//! the scores and then taking the middle score. (There will always be an odd
+//! number of scores to consider.) In this example, the middle score is 288957
+//! because there are the same number of scores smaller and larger than it.
+//!
+//! Find the completion string for each incomplete line, score the completion
+//! strings, and sort the scores. What is the middle score?
+//!
 //! [Advent of Code 2021 - Day 10](https://adventofcode.com/2021/day/10)
-
-const SCORE_LUT: [u32; 4] = [3, 57, 1197, 25137];
 
 #[aoc_generator(day10)]
 pub fn parse(input: &str) -> Vec<String> {
@@ -93,11 +151,11 @@ pub fn parse(input: &str) -> Vec<String> {
         .collect()
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum SyntaxError {
     ClosingCharacterMismatch(char, char),
-    MissingClosingCharacter(char),
     MissingOpeningCharacter(char),
+    MissingClosingCharacter(Vec<char>),
 }
 
 fn matching_opening_character(closing: char) -> char {
@@ -128,42 +186,87 @@ fn parse_code_line(code_line: &str) -> Result<(), SyntaxError> {
             ')' | ']' | '}' | '>' => {
                 if let Some(opening) = opened.pop() {
                     if c != matching_closing_character(opening) {
-                        return Err(SyntaxError::ClosingCharacterMismatch(c, opening));
+                        return Err(SyntaxError::ClosingCharacterMismatch(opening, c));
                     }
                 } else {
-                    return Err(SyntaxError::MissingOpeningCharacter(c));
+                    return Err(SyntaxError::MissingOpeningCharacter(
+                        matching_opening_character(c),
+                    ));
                 }
             }
             _ => {}
         }
     }
-    if let Some(opening) = opened.pop() {
-        return Err(SyntaxError::MissingClosingCharacter(opening));
+    if opened.is_empty() {
+        Ok(())
+    } else {
+        let missing_closing = opened
+            .into_iter()
+            .rev()
+            .map(matching_closing_character)
+            .collect();
+        Err(SyntaxError::MissingClosingCharacter(missing_closing))
     }
-    Ok(())
 }
 
-fn score_syntax_error(error: SyntaxError) -> u32 {
+fn score_syntax_error(error: &SyntaxError) -> u64 {
     match error {
-        SyntaxError::ClosingCharacterMismatch(c, _) => match c {
-            ')' => SCORE_LUT[0],
-            ']' => SCORE_LUT[1],
-            '}' => SCORE_LUT[2],
-            '>' => SCORE_LUT[3],
+        SyntaxError::ClosingCharacterMismatch(_, c) => match c {
+            ')' => 3,
+            ']' => 57,
+            '}' => 1197,
+            '>' => 25137,
             _ => 0,
         },
-        SyntaxError::MissingClosingCharacter(_) => 0,
         SyntaxError::MissingOpeningCharacter(_) => 0,
+        SyntaxError::MissingClosingCharacter(_) => 0,
+    }
+}
+
+fn score_auto_complete(error: &SyntaxError) -> u64 {
+    match error {
+        SyntaxError::ClosingCharacterMismatch(_, _) => 0,
+        SyntaxError::MissingOpeningCharacter(_) => 0,
+        SyntaxError::MissingClosingCharacter(chars) => chars.iter().fold(0, |acc, c| {
+            acc * 5
+                + match c {
+                    ')' => 1,
+                    ']' => 2,
+                    '}' => 3,
+                    '>' => 4,
+                    _ => 0,
+                }
+        }),
     }
 }
 
 #[aoc(day10, part1)]
-pub fn total_syntax_error_score(code_lines: &[String]) -> u32 {
+pub fn total_syntax_error_score(code_lines: &[String]) -> u64 {
     code_lines
         .iter()
         .filter_map(|line| parse_code_line(line).err())
-        .map(|err| score_syntax_error(err))
+        .filter(|err| match err {
+            SyntaxError::ClosingCharacterMismatch(_, _) => true,
+            _ => false,
+        })
+        .map(|err| score_syntax_error(&err))
         .sum()
+}
+
+#[aoc(day10, part2)]
+pub fn total_auto_complete_score(code_lines: &[String]) -> u64 {
+    let mut scores = code_lines
+        .iter()
+        .filter_map(|line| parse_code_line(line).err())
+        .filter(|err| match err {
+            SyntaxError::MissingClosingCharacter(_) => true,
+            _ => false,
+        })
+        .map(|err| score_auto_complete(&err))
+        .collect::<Vec<_>>();
+    scores.sort();
+    let middle = scores.len() / 2;
+    scores[middle]
 }
 
 #[cfg(test)]
