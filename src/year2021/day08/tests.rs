@@ -51,7 +51,7 @@ mod part2 {
 
         assert_eq!(
             mapping,
-            HashMap::from_iter([
+            Some(HashMap::from_iter([
                 ('g', 4),
                 ('c', 6),
                 ('d', 0),
@@ -59,7 +59,7 @@ mod part2 {
                 ('f', 3),
                 ('a', 2),
                 ('b', 5)
-            ])
+            ]))
         );
     }
 

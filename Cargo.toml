@@ -17,8 +17,8 @@ event2017 = []
 event2018 = [ "failure", "log" ]
 event2019 = [ "log" ]
 event2020 = [ "hashbrown", "fxhash" ]
-event2021 = [ "bitvec", "hashbrown", "itertools" ]
-default = [ "bitvec", "hashbrown", "itertools" ]
+event2021 = [ "arrayvec", "bitvec", "hashbrown" ]
+default = [ "arrayvec", "bitvec", "hashbrown" ]
 
 [lib]
 bench = false
@@ -26,11 +26,11 @@ bench = false
 [dependencies]
 aoc-runner = "0.3"
 aoc-runner-derive = "0.3"
+arrayvec = { version = "0.7", optional = true }
 bitvec = { version = "0.22", optional = true }
 failure = { version = "0.1", optional = true }
 fxhash = { version = "0.2", optional = true }
 hashbrown = { version = "0.11", optional = true }
-itertools = { version = "0.10", optional = true }
 log = { version = "0.4", features = ["release_max_level_info"], optional = true }
 
 [dev-dependencies]

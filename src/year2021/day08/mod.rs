@@ -179,8 +179,8 @@
 //!
 //! [Advent of Code 2021 - Day 8](https://adventofcode.com/2021/day/8)
 
+use arrayvec::ArrayVec;
 use hashbrown::HashSet;
-use itertools::Itertools;
 use std::collections::HashMap;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -331,16 +331,60 @@ fn digit_for_signal(
     DIGITS.iter().find(|valid| digit == **valid).copied()
 }
 
-fn decode_signals(signals: &[HashSet<char>]) -> HashMap<char, usize> {
+struct Permutations<T, const N: usize> {
+    idxs: ArrayVec<T, N>,
+    swaps: ArrayVec<usize, N>,
+    i: usize,
+}
+
+impl<T, const N: usize> From<ArrayVec<T, N>> for Permutations<T, N> {
+    fn from(array: ArrayVec<T, N>) -> Self {
+        Self {
+            idxs: array,
+            swaps: ArrayVec::from([0; N]),
+            i: 0,
+        }
+    }
+}
+
+impl<T, const N: usize> Iterator for Permutations<T, N>
+where
+    T: Clone,
+{
+    type Item = ArrayVec<T, N>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.i > 0 {
+            loop {
+                if self.i >= self.swaps.len() {
+                    return None;
+                }
+                if self.swaps[self.i] < self.i {
+                    break;
+                }
+                self.swaps[self.i] = 0;
+                self.i += 1;
+            }
+            self.idxs.swap(self.i, (self.i & 1) * self.swaps[self.i]);
+            self.swaps[self.i] += 1;
+        }
+        self.i = 1;
+        Some(self.idxs.clone())
+    }
+}
+
+fn decode_signals(signals: &[HashSet<char>]) -> Option<HashMap<char, usize>> {
     let mut found_mapping = None;
     let one_signal = signals.iter().find(|signal| signal.len() == 2).unwrap();
     let seven_signal = signals.iter().find(|signal| signal.len() == 3).unwrap();
     let char0 = *seven_signal.difference(one_signal).next().unwrap();
-    let mut all_wires = vec!['a', 'b', 'c', 'd', 'e', 'f', 'g'];
-    let char0_pos = all_wires.iter().position(|c| *c == char0).unwrap();
-    all_wires.remove(char0_pos);
-    let k_value = all_wires.len();
-    for mut wires in all_wires.into_iter().permutations(k_value) {
+    let all_wires = ArrayVec::<_, 7>::from_iter(
+        ['a', 'b', 'c', 'd', 'e', 'f', 'g']
+            .iter()
+            .copied()
+            .filter(|c| *c != char0),
+    );
+    for mut wires in Permutations::from(all_wires) {
         wires.insert(0, char0);
         let mapping = signal_segment_map(wires);
         if signals
@@ -351,7 +395,7 @@ fn decode_signals(signals: &[HashSet<char>]) -> HashMap<char, usize> {
             break;
         }
     }
-    found_mapping.expect("no valid mapping found")
+    found_mapping
 }
 
 #[aoc(day8, part2)]
@@ -359,7 +403,7 @@ pub fn sum_output_values(pattern_list: &[Pattern]) -> i64 {
     pattern_list
         .iter()
         .map(|pattern| {
-            let mapping = decode_signals(&pattern.signals);
+            let mapping = decode_signals(&pattern.signals).expect("no valid mapping found");
             pattern
                 .display
                 .iter()
