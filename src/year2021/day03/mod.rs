@@ -170,8 +170,6 @@ pub fn power_consumption(diagnostic_report: &[BitVec]) -> u32 {
         .map(|index| !most_common_value(index, diagnostic_report))
         .collect::<BitVec>()
         .load::<u32>();
-    dbg!(gamma_rate);
-    dbg!(epsilon_rate);
 
     gamma_rate * epsilon_rate
 }
