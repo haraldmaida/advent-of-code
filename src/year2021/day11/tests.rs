@@ -36,3 +36,25 @@ mod part1 {
         assert_eq!(result, 1594);
     }
 }
+
+mod part2 {
+    use super::*;
+
+    #[test]
+    fn part2_example1() {
+        let input = parse(EXAMPLE1);
+
+        let result = solve_part2(&input);
+
+        assert_eq!(result, 195);
+    }
+
+    #[test]
+    fn answer() {
+        let input = parse(INPUT);
+
+        let result = solve_part2(&input);
+
+        assert_eq!(result, 437);
+    }
+}

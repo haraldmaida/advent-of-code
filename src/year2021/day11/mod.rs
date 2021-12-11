@@ -326,6 +326,57 @@
 //! Given the starting energy levels of the dumbo octopuses in your cavern,
 //! simulate 100 steps. How many total flashes are there after 100 steps?
 //!
+//! ## Part Two
+//!
+//! It seems like the individual flashes aren't bright enough to navigate.
+//! However, you might have a better option: the flashes seem to be
+//! synchronizing!
+//!
+//! In the example above, the first time all octopuses flash simultaneously is
+//! step 195:
+//!
+//! ```text
+//! After step 193:
+//! 5877777777
+//! 8877777777
+//! 7777777777
+//! 7777777777
+//! 7777777777
+//! 7777777777
+//! 7777777777
+//! 7777777777
+//! 7777777777
+//! 7777777777
+//!
+//! After step 194:
+//! 6988888888
+//! 9988888888
+//! 8888888888
+//! 8888888888
+//! 8888888888
+//! 8888888888
+//! 8888888888
+//! 8888888888
+//! 8888888888
+//! 8888888888
+//!
+//! After step 195:
+//! 0000000000
+//! 0000000000
+//! 0000000000
+//! 0000000000
+//! 0000000000
+//! 0000000000
+//! 0000000000
+//! 0000000000
+//! 0000000000
+//! 0000000000
+//! ```
+//!
+//! If you can calculate the exact moments when the octopuses will all flash
+//! simultaneously, you should be able to navigate through the cavern. What is
+//! the first step during which all octopuses flash?
+//!
 //! [Advent of Code 2021 - Day 11](https://adventofcode.com/2021/day/11)
 
 use hashbrown::HashSet;
@@ -420,6 +471,10 @@ impl EnergyMap {
     pub fn energy_level(&self, position: Position) -> Option<u8> {
         self.energy_level_inner(position).map(|level| level as u8)
     }
+
+    pub fn is_all_flashing(&self) -> bool {
+        self.0.iter().skip(1).all(|positions| positions.is_empty())
+    }
 }
 
 #[aoc_generator(day11)]
@@ -475,6 +530,22 @@ pub fn solve_part1(energy_map: &EnergyMap) -> usize {
     //eprintln!("{}", energy_map);
     let mut energy_map = energy_map.clone();
     (0..100).fold(0, |count, _| count + step(&mut energy_map).len())
+}
+
+#[aoc(day11, part2)]
+pub fn solve_part2(energy_map: &EnergyMap) -> usize {
+    //eprintln!("{}", energy_map);
+    let mut energy_map = energy_map.clone();
+    (1..)
+        .find_map(|num| {
+            step(&mut energy_map);
+            if energy_map.is_all_flashing() {
+                Some(num)
+            } else {
+                None
+            }
+        })
+        .expect("no all flashing moment")
 }
 
 #[cfg(test)]
