@@ -12,7 +12,7 @@ mod part1 {
 
         let result = distance_to_closest_intersection(&[wire1_path, wire2_path]);
 
-        assert_eq!(result, Distance::new(6));
+        assert_eq!(result, Distance(6));
     }
 
     #[test]
@@ -22,7 +22,7 @@ mod part1 {
 
         let result = distance_to_closest_intersection(&[wire1_path, wire2_path]);
 
-        assert_eq!(result, Distance::new(159));
+        assert_eq!(result, Distance(159));
     }
 
     #[test]
@@ -32,7 +32,7 @@ mod part1 {
 
         let result = distance_to_closest_intersection(&[wire1_path, wire2_path]);
 
-        assert_eq!(result, Distance::new(135));
+        assert_eq!(result, Distance(135));
     }
 
     #[test]
@@ -41,6 +41,6 @@ mod part1 {
 
         let result = distance_to_closest_intersection(&wires);
 
-        assert_eq!(result, Distance::new(200));
+        assert_eq!(result, Distance(1431));
     }
 }

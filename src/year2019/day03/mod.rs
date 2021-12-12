@@ -69,13 +69,12 @@
 //!
 //! [Advent of Code 2019 - Day 3](https://adventofcode.com/2019/day/3)
 
-use crate::year2019::day03::wire_grid::{Direction, Distance, Move, Point, Segment};
-use std::iter::FromIterator;
-use std::str::FromStr;
+use crate::year2019::day03::wire_grid::{Direction, Distance, Move, Point};
+use hashbrown::HashSet;
 
 mod wire_grid {
     use std::fmt::{self, Display};
-    use std::ops::Add;
+    use std::str::FromStr;
 
     #[derive(Debug, Clone, Copy, PartialEq, Eq)]
     pub enum Direction {
@@ -85,8 +84,35 @@ mod wire_grid {
         Right,
     }
 
+    impl FromStr for Direction {
+        type Err = String;
+
+        fn from_str(s: &str) -> Result<Self, Self::Err> {
+            let dir_char = s.chars().next();
+            match dir_char {
+                Some('U') => Ok(Direction::Up),
+                Some('D') => Ok(Direction::Down),
+                Some('L') => Ok(Direction::Left),
+                Some('R') => Ok(Direction::Right),
+                Some(chr) => Err(format!("invalid direction: {}", chr)),
+                None => Err(format!("missing direction")),
+            }
+        }
+    }
+
     #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-    pub struct Distance(i32);
+    pub struct Distance(pub i32);
+
+    impl FromStr for Distance {
+        type Err = String;
+
+        fn from_str(s: &str) -> Result<Self, Self::Err> {
+            let value = s
+                .parse::<i32>()
+                .map_err(|err| format!("invalid distance: {}", err))?;
+            Ok(Distance(value))
+        }
+    }
 
     impl Display for Distance {
         fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -95,161 +121,51 @@ mod wire_grid {
     }
 
     impl Distance {
-        pub const fn zero() -> Self {
-            Distance(0)
-        }
-
-        pub fn new(value: i32) -> Self {
-            Distance(value)
-        }
-
-        pub fn val(self) -> i32 {
-            self.0
-        }
+        pub const ZERO: Self = Distance(0);
     }
 
     #[derive(Debug, Clone, Copy, PartialEq, Eq)]
     pub struct Move {
-        direction: Direction,
-        distance: Distance,
+        pub direction: Direction,
+        pub distance: Distance,
     }
 
-    impl Move {
-        pub fn new(direction: Direction, distance: Distance) -> Self {
-            Self {
+    impl FromStr for Move {
+        type Err = String;
+
+        fn from_str(s: &str) -> Result<Self, Self::Err> {
+            let mut chars = s.chars();
+            let direction_str = chars
+                .next()
+                .map(|c| c.to_string())
+                .unwrap_or_else(String::new);
+            let direction = direction_str.parse::<Direction>()?;
+            let distance_str = String::from_iter(chars);
+            let distance = distance_str.parse::<Distance>()?;
+            Ok(Self {
                 direction,
                 distance,
-            }
-        }
-
-        pub fn into_segment(self) -> Segment {
-            match self.direction {
-                Direction::Up => Segment(
-                    Point { x: 0, y: 0 },
-                    Point {
-                        x: 0,
-                        y: self.distance.0,
-                    },
-                ),
-                Direction::Down => Segment(
-                    Point { x: 0, y: 0 },
-                    Point {
-                        x: 0,
-                        y: -self.distance.0,
-                    },
-                ),
-                Direction::Left => Segment(
-                    Point { x: 0, y: 0 },
-                    Point {
-                        x: -self.distance.0,
-                        y: 0,
-                    },
-                ),
-                Direction::Right => Segment(
-                    Point { x: 0, y: 0 },
-                    Point {
-                        x: self.distance.0,
-                        y: 0,
-                    },
-                ),
-            }
-        }
-
-        pub fn direction(self) -> Direction {
-            self.direction
-        }
-
-        pub fn distance(self) -> Distance {
-            self.distance
+            })
         }
     }
 
-    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
     pub struct Point {
-        x: i32,
-        y: i32,
+        pub x: i32,
+        pub y: i32,
     }
 
     impl Point {
-        pub const fn zero() -> Self {
-            Self { x: 0, y: 0 }
-        }
-
-        pub fn new(x: i32, y: i32) -> Self {
-            Self { x, y }
-        }
-
-        pub fn x(self) -> i32 {
-            self.x
-        }
-
-        pub fn y(self) -> i32 {
-            self.y
-        }
+        pub const ZERO: Self = Self { x: 0, y: 0 };
 
         pub fn manhattan_distance(self, other: Point) -> Distance {
             Distance((self.x - other.x).abs() + (self.y - other.y).abs())
         }
     }
-
-    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-    pub struct Segment(pub Point, pub Point);
-
-    impl Add<Point> for Segment {
-        type Output = Segment;
-
-        fn add(self, rhs: Point) -> Self::Output {
-            Segment(
-                Point {
-                    x: self.0.x + rhs.x,
-                    y: self.0.y + rhs.y,
-                },
-                Point {
-                    x: self.1.x + rhs.x,
-                    y: self.0.y + rhs.y,
-                },
-            )
-        }
-    }
-
-    impl Segment {
-        /// http://geomalgorithms.com/a05-_intersect-1.html
-        pub fn intersection(self, other: Segment) -> Option<Point> {
-            self.list_points().into_iter().find_map(|point1| {
-                other
-                    .list_points()
-                    .into_iter()
-                    .find(|point2| *point2 == point1)
-            })
-        }
-
-        fn list_points(self) -> Vec<Point> {
-            if self.0.x == self.1.x {
-                let (min_y, max_y) = if self.0.y <= self.1.y {
-                    (self.0.y, self.1.y)
-                } else {
-                    (self.1.y, self.0.y)
-                };
-
-                (min_y..=max_y).map(|y| Point { x: self.0.x, y }).collect()
-            } else {
-                let (min_x, max_x) = if self.0.x <= self.1.x {
-                    (self.0.x, self.1.x)
-                } else {
-                    (self.1.x, self.0.x)
-                };
-
-                (min_x..=max_x).map(|x| Point { x, y: self.0.y }).collect()
-            }
-        }
-    }
 }
 
-#[derive(Debug)]
-pub enum ParseMoveError {
-    InvalidMove(String),
-    InvalidDirection(char),
-    InvalidDistance(String),
+fn parse_line(line: &str) -> Result<Vec<Move>, String> {
+    line.trim().split(',').map(|s| s.parse::<Move>()).collect()
 }
 
 #[aoc_generator(day3)]
@@ -258,74 +174,57 @@ pub fn parse(input: &str) -> Vec<Vec<Move>> {
         .trim()
         .lines()
         .map(parse_line)
-        .collect::<Result<_, ParseMoveError>>()
+        .collect::<Result<_, String>>()
         .unwrap_or_else(|err| panic!("invalid input: {:?}", err))
 }
 
-fn parse_line(line: &str) -> Result<Vec<Move>, ParseMoveError> {
-    line.trim().split(',').map(parse_move).collect()
-}
-
-fn parse_move(input: &str) -> Result<Move, ParseMoveError> {
-    let mut chars = input.trim().chars();
-    match chars.next() {
-        Some('U') => Ok(Direction::Up),
-        Some('D') => Ok(Direction::Down),
-        Some('L') => Ok(Direction::Left),
-        Some('R') => Ok(Direction::Right),
-        Some(chr) => Err(ParseMoveError::InvalidDirection(chr)),
-        None => Err(ParseMoveError::InvalidMove(input.into())),
-    }
-    .and_then(|direction| {
-        let str_val = String::from_iter(chars);
-        if let Ok(distance) = i32::from_str(&str_val) {
-            Ok(Move::new(direction, Distance::new(distance)))
-        } else {
-            Err(ParseMoveError::InvalidDistance(str_val.into()))
+fn wire_points(wire: &[Move]) -> HashSet<Point> {
+    let mut points = HashSet::new();
+    let mut last_point = Point::ZERO;
+    for a_move in wire {
+        for _ in 0..a_move.distance.0 {
+            let point = match a_move.direction {
+                Direction::Up => Point {
+                    x: last_point.x,
+                    y: last_point.y + 1,
+                },
+                Direction::Down => Point {
+                    x: last_point.x,
+                    y: last_point.y - 1,
+                },
+                Direction::Left => Point {
+                    x: last_point.x - 1,
+                    y: last_point.y,
+                },
+                Direction::Right => Point {
+                    x: last_point.x + 1,
+                    y: last_point.y,
+                },
+            };
+            points.insert(point);
+            last_point = point;
         }
-    })
+    }
+    points
 }
 
-fn map_to_segments(line: &[Move]) -> Vec<Segment> {
-    let mut segments = Vec::with_capacity(line.len());
-    let mut last_point = Point::zero();
-    for a_move in line {
-        let next_point = match a_move.direction() {
-            Direction::Up => Point::new(last_point.x(), last_point.y() + a_move.distance().val()),
-            Direction::Down => Point::new(last_point.x(), last_point.y() - a_move.distance().val()),
-            Direction::Left => Point::new(last_point.x() - a_move.distance().val(), last_point.y()),
-            Direction::Right => {
-                Point::new(last_point.x() + a_move.distance().val(), last_point.y())
-            }
-        };
-        segments.push(Segment(last_point, next_point));
-        last_point = next_point;
-    }
-    segments
+fn find_intersections(wire1: &[Move], wire2: &[Move]) -> HashSet<Point> {
+    wire_points(wire1)
+        .intersection(&wire_points(wire2))
+        .copied()
+        .collect()
 }
 
 #[aoc(day3, part1)]
 pub fn distance_to_closest_intersection(input: &[Vec<Move>]) -> Distance {
-    let wire1 = map_to_segments(&input[0]);
-    let wire2 = map_to_segments(&input[1]);
-
+    let wire1 = &input[0];
+    let wire2 = &input[1];
     find_intersections(&wire1, &wire2)
         .iter()
-        .filter(|point| **point != Point::zero())
-        .map(|point| Point::zero().manhattan_distance(*point))
+        .filter(|point| **point != Point::ZERO)
+        .map(|point| Point::ZERO.manhattan_distance(*point))
         .min()
-        .unwrap_or(Distance::zero())
-}
-
-fn find_intersections(wire1: &[Segment], wire2: &[Segment]) -> Vec<Point> {
-    wire1
-        .into_iter()
-        .flat_map(|segment1| {
-            wire2
-                .into_iter()
-                .filter_map(move |segment2| segment2.intersection(*segment1))
-        })
-        .collect()
+        .unwrap_or(Distance::ZERO)
 }
 
 #[cfg(test)]
