@@ -11,6 +11,7 @@ repository = "https://github.com/haraldmaida/advent-of-code"
 keywords = ["advent", "puzzle"]
 
 [features]
+default = [ "event2021" ]
 event2015 = []
 event2016 = []
 event2017 = []
@@ -18,7 +19,6 @@ event2018 = [ "failure", "log" ]
 event2019 = [ "hashbrown", "log" ]
 event2020 = [ "hashbrown", "fxhash" ]
 event2021 = [ "arrayvec", "bitvec", "hashbrown" ]
-#default = [ "arrayvec", "bitvec", "hashbrown" ]
 
 [lib]
 bench = false
