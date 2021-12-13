@@ -130,6 +130,62 @@
 //! How many paths through this cave system are there that visit small caves at
 //! most once?
 //!
+//! ## Part Two
+//!
+//! After reviewing the available paths, you realize you might have time to
+//! visit a single small cave twice. Specifically, big caves can be visited any
+//! number of times, a single small cave can be visited at most twice, and the
+//! remaining small caves can be visited at most once. However, the caves named
+//! start and end can only be visited exactly once each: once you leave the
+//! start cave, you may not return to it, and once you reach the end cave, the
+//! path must end immediately.
+//!
+//! Now, the 36 possible paths through the first example above are:
+//!
+//! ```text
+//! start,A,b,A,b,A,c,A,end
+//! start,A,b,A,b,A,end
+//! start,A,b,A,b,end
+//! start,A,b,A,c,A,b,A,end
+//! start,A,b,A,c,A,b,end
+//! start,A,b,A,c,A,c,A,end
+//! start,A,b,A,c,A,end
+//! start,A,b,A,end
+//! start,A,b,d,b,A,c,A,end
+//! start,A,b,d,b,A,end
+//! start,A,b,d,b,end
+//! start,A,b,end
+//! start,A,c,A,b,A,b,A,end
+//! start,A,c,A,b,A,b,end
+//! start,A,c,A,b,A,c,A,end
+//! start,A,c,A,b,A,end
+//! start,A,c,A,b,d,b,A,end
+//! start,A,c,A,b,d,b,end
+//! start,A,c,A,b,end
+//! start,A,c,A,c,A,b,A,end
+//! start,A,c,A,c,A,b,end
+//! start,A,c,A,c,A,end
+//! start,A,c,A,end
+//! start,A,end
+//! start,b,A,b,A,c,A,end
+//! start,b,A,b,A,end
+//! start,b,A,b,end
+//! start,b,A,c,A,b,A,end
+//! start,b,A,c,A,b,end
+//! start,b,A,c,A,c,A,end
+//! start,b,A,c,A,end
+//! start,b,A,end
+//! start,b,d,b,A,c,A,end
+//! start,b,d,b,A,end
+//! start,b,d,b,end
+//! start,b,end
+//! ```
+//!
+//! The slightly larger example above now has 103 paths through it, and the even
+//! larger example now has 3509 paths through it.
+//!
+//! Given these new rules, how many paths through this cave system are there?
+//!
 //! [Advent of Code 2021 - Day 12](https://adventofcode.com/2021/day/12)
 
 use hashbrown::{HashMap, HashSet};
@@ -221,12 +277,9 @@ impl CaveMap {
         let start_index = *self.indexes.get(start)?;
         let end_index = *self.indexes.get(end)?;
         let mut found_paths = Vec::new();
-        let path = vec![start_index];
-        let once = HashSet::new();
-        let visited = HashSet::new();
         let mut to_visit = Vec::new();
-        to_visit.push((start_index, path, visited, once));
-        while let Some((current, path, visited, once)) = to_visit.pop() {
+        to_visit.push((start_index, vec![start_index], HashSet::new()));
+        while let Some((current, path, once)) = to_visit.pop() {
             for &neighbor in &self.adjacent_list[current] {
                 if neighbor == end_index {
                     let mut found = path.clone();
@@ -235,13 +288,45 @@ impl CaveMap {
                 } else if neighbor == start_index {
                 } else {
                     let mut once = once.clone();
-                    let mut visited = visited.clone();
-                    if visited.insert((current, neighbor))
-                        && (self.caves[&neighbor].kind == CaveKind::Big || once.insert(neighbor))
-                    {
+                    if self.caves[&neighbor].kind == CaveKind::Big || once.insert(neighbor) {
                         let mut path = path.clone();
                         path.push(neighbor);
-                        to_visit.push((neighbor, path, visited, once));
+                        to_visit.push((neighbor, path, once));
+                    }
+                }
+            }
+        }
+        Some(
+            found_paths
+                .iter()
+                .map(|path| path.iter().map(|i| self.caves[i].clone()).collect())
+                .collect(),
+        )
+    }
+
+    pub fn find_all_paths2(&self, start: &str, end: &str) -> Option<Vec<Vec<Cave>>> {
+        let start_index = *self.indexes.get(start)?;
+        let end_index = *self.indexes.get(end)?;
+        let mut found_paths = Vec::new();
+        let mut to_visit = Vec::new();
+        to_visit.push((start_index, vec![start_index], HashSet::new(), 0));
+        while let Some((current, path, once, dup_small)) = to_visit.pop() {
+            for &neighbor in &self.adjacent_list[current] {
+                if neighbor == end_index {
+                    let mut found = path.clone();
+                    found.push(end_index);
+                    found_paths.push(found);
+                } else if neighbor == start_index {
+                } else {
+                    let mut dup_small = dup_small;
+                    let mut once = once.clone();
+                    if self.caves[&neighbor].kind == CaveKind::Big || once.insert(neighbor) || {
+                        dup_small += 1;
+                        dup_small <= 1
+                    } {
+                        let mut path = path.clone();
+                        path.push(neighbor);
+                        to_visit.push((neighbor, path, once, dup_small));
                     }
                 }
             }
@@ -272,6 +357,15 @@ pub fn solve_part1(input: &[Connection]) -> usize {
     let cave_map = CaveMap::from_iter(input.iter().cloned());
     cave_map
         .find_all_paths("start", "end")
+        .expect("no path found at all")
+        .len()
+}
+
+#[aoc(day12, part2)]
+pub fn solve_part2(input: &[Connection]) -> usize {
+    let cave_map = CaveMap::from_iter(input.iter().cloned());
+    cave_map
+        .find_all_paths2("start", "end")
         .expect("no path found at all")
         .len()
 }

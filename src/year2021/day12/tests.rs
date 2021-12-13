@@ -85,3 +85,43 @@ mod part1 {
         assert_eq!(result, 3410);
     }
 }
+
+mod part2 {
+    use super::*;
+
+    #[test]
+    fn example1() {
+        let input = parse(EXAMPLE1);
+
+        let result = solve_part2(&input);
+
+        assert_eq!(result, 36);
+    }
+
+    #[test]
+    fn example2() {
+        let input = parse(EXAMPLE2);
+
+        let result = solve_part2(&input);
+
+        assert_eq!(result, 103);
+    }
+
+    #[test]
+    fn example3() {
+        let input = parse(EXAMPLE3);
+
+        let result = solve_part2(&input);
+
+        assert_eq!(result, 3509);
+    }
+
+    #[test]
+    fn answer() {
+        let input = parse(INPUT);
+
+        let result = solve_part2(&input);
+
+        assert_eq!(result, 98796);
+    }
+}
