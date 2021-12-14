@@ -148,9 +148,18 @@
 //! How many dots are visible after completing just the first fold instruction
 //! on your transparent paper?
 //!
+//! ## Part Two
+//!
+//! Finish folding the transparent paper according to the instructions. The
+//! manual says the code is always eight capital letters.
+//!
+//! What code do you use to activate the infrared thermal imaging camera system?
+//!
 //! [Advent of Code 2021 - Day 13](https://adventofcode.com/2021/day/13)
 
 use hashbrown::HashSet;
+use std::fmt;
+use std::fmt::Display;
 use std::str::FromStr;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -203,6 +212,33 @@ pub struct Image(HashSet<Point>);
 impl FromIterator<Point> for Image {
     fn from_iter<T: IntoIterator<Item = Point>>(iter: T) -> Self {
         Image(HashSet::from_iter(iter.into_iter()))
+    }
+}
+
+impl Display for Image {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let mut min_x = i32::MAX;
+        let mut max_x = i32::MIN;
+        let mut min_y = i32::MAX;
+        let mut max_y = i32::MIN;
+        for p in self.0.iter() {
+            min_x = min_x.min(p.x);
+            max_x = max_x.max(p.x);
+            min_y = min_y.min(p.y);
+            max_y = max_y.max(p.y);
+        }
+        for y in min_y..=max_y {
+            let mut line = String::with_capacity((max_x - min_x + 1) as usize);
+            for x in min_x..=max_x {
+                if self.0.get(&Point { x, y }).is_some() {
+                    line.push('#');
+                } else {
+                    line.push('.');
+                }
+            }
+            writeln!(f, "{}", line)?;
+        }
+        Ok(())
     }
 }
 
@@ -279,8 +315,13 @@ pub fn solve_part1(man_page1: &ManPage1) -> usize {
 }
 
 #[aoc(day13, part2)]
-pub fn solve_part2(man_page1: &ManPage1) -> usize {
-    todo!()
+pub fn solve_part2(man_page1: &ManPage1) -> String {
+    let image = man_page1
+        .folds
+        .iter()
+        .fold(man_page1.image.clone(), |image, fold| image.fold(*fold));
+    //eprintln!("{}", image);
+    image.to_string()
 }
 
 #[cfg(test)]
