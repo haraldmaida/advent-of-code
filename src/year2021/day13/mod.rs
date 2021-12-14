@@ -159,7 +159,7 @@
 
 use hashbrown::HashSet;
 use std::fmt;
-use std::fmt::Display;
+use std::fmt::{Display, Write};
 use std::str::FromStr;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -228,15 +228,14 @@ impl Display for Image {
             max_y = max_y.max(p.y);
         }
         for y in min_y..=max_y {
-            let mut line = String::with_capacity((max_x - min_x + 1) as usize);
             for x in min_x..=max_x {
                 if self.0.get(&Point { x, y }).is_some() {
-                    line.push('#');
+                    f.write_char('#')?;
                 } else {
-                    line.push('.');
+                    f.write_char('.')?;
                 }
             }
-            writeln!(f, "{}", line)?;
+            writeln!(f, "")?;
         }
         Ok(())
     }
