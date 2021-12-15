@@ -44,3 +44,25 @@ mod part1 {
         assert_eq!(result, 2745);
     }
 }
+
+mod part2 {
+    use super::*;
+
+    #[test]
+    fn example1() {
+        let input = parse(EXAMPLE1);
+
+        let result = solve_part2(&input);
+
+        assert_eq!(result, 2188189693529);
+    }
+
+    #[test]
+    fn answer() {
+        let input = parse(INPUT);
+
+        let result = solve_part2(&input);
+
+        assert_eq!(result, 3420801168962);
+    }
+}

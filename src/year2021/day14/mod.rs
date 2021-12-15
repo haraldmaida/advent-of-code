@@ -79,6 +79,21 @@
 //! quantity of the most common element and subtract the quantity of the least
 //! common element?
 //!
+//! # Part Two
+//!
+//! The resulting polymer isn't nearly strong enough to reinforce the submarine.
+//! You'll need to run more steps of the pair insertion process; a total of 40
+//! steps should do it.
+//!
+//! In the above example, the most common element is B (occurring 2192039569602
+//! times) and the least common element is H (occurring 3849876073 times);
+//! subtracting these produces 2188189693529.
+//!
+//! Apply 40 steps of pair insertion to the polymer template and find the most
+//! and least common elements in the result. What do you get if you take the
+//! quantity of the most common element and subtract the quantity of the least
+//! common element?
+//!
 //! [Advent of Code 2021 - Day 14](https://adventofcode.com/2021/day/14)
 
 use hashbrown::HashMap;
@@ -148,38 +163,101 @@ pub fn parse(input: &str) -> PolymerInstructions {
     PolymerInstructions { template, rules }
 }
 
-#[aoc(day14, part1)]
-pub fn solve_part1(polymer_instructions: &PolymerInstructions) -> usize {
-    //eprintln!("{}", polymer_instructions);
+pub fn develop_polymer(num_runs: u16, polymer_instructions: &PolymerInstructions) -> String {
     let template = polymer_instructions.template.to_string();
-    let polymer = (0..10).fold(template, |polymer, _| {
-        let last_char = polymer.chars().last().expect("empty polymer");
-        polymer
-            .chars()
-            .zip(polymer.chars().skip(1))
-            .flat_map(|sequence| {
-                if let Some(insertion) = polymer_instructions.rules.get(&sequence) {
-                    vec![sequence.0, *insertion]
-                } else {
-                    vec![sequence.0]
-                }
-            })
-            .chain(once(last_char))
+    (0..num_runs).fold(template, |polymer, _| {
+        let first_char = polymer.chars().next().expect("empty polymer");
+        once(first_char)
+            .chain(
+                polymer
+                    .chars()
+                    .zip(polymer.chars().skip(1))
+                    .flat_map(|sequence| {
+                        if let Some(insertion) = polymer_instructions.rules.get(&sequence) {
+                            vec![*insertion, sequence.1]
+                        } else {
+                            vec![sequence.1]
+                        }
+                    }),
+            )
             .collect()
-    });
-    let mut letter_counts = HashMap::new();
+    })
+}
+
+fn count_elements_in_polymer(polymer: &str) -> HashMap<char, u64> {
+    let mut element_counts = HashMap::new();
     for c in polymer.chars() {
-        *letter_counts.entry(c).or_insert(0) += 1;
+        *element_counts.entry(c).or_insert(0) += 1;
     }
-    let most_common = letter_counts
-        .iter()
-        .max_by_key(|(_, counts)| **counts)
+    element_counts
+}
+
+#[aoc(day14, part1)]
+pub fn solve_part1(polymer_instructions: &PolymerInstructions) -> u64 {
+    //eprintln!("{}", polymer_instructions);
+    let polymer = develop_polymer(10, polymer_instructions);
+    let element_counts = count_elements_in_polymer(&polymer);
+    let most_common = *element_counts
+        .values()
+        .max()
         .expect("no character in polymer at all");
-    let least_common = letter_counts
-        .iter()
-        .min_by_key(|(_, counts)| **counts)
+    let least_common = *element_counts
+        .values()
+        .min()
         .expect("no character in polymer at all");
-    *most_common.1 - *least_common.1
+    most_common - least_common
+}
+
+fn init_pair_counts(template: &str) -> HashMap<(char, char), u64> {
+    let mut pair_count = HashMap::new();
+    for pair in template.chars().zip(template.chars().skip(1)) {
+        *pair_count.entry(pair).or_insert(0) += 1;
+    }
+    pair_count
+}
+
+fn develop_polymer2(
+    num_runs: u16,
+    polymer_instructions: &PolymerInstructions,
+) -> HashMap<(char, char), u64> {
+    let mut pair_counts = init_pair_counts(&polymer_instructions.template);
+    for _ in 0..num_runs {
+        let mut next_pair_counts = HashMap::new();
+        for (pair, count) in pair_counts {
+            if let Some(insertion) = polymer_instructions.rules.get(&pair) {
+                *next_pair_counts.entry((pair.0, *insertion)).or_insert(0) += count;
+                *next_pair_counts.entry((*insertion, pair.1)).or_insert(0) += count;
+            } else {
+                *next_pair_counts.entry(pair).or_insert(0) += count;
+            }
+        }
+        pair_counts = next_pair_counts;
+    }
+    pair_counts
+}
+
+fn count_elements_in_pairs(pair_counts: &HashMap<(char, char), u64>) -> HashMap<char, u64> {
+    let mut element_counts = HashMap::new();
+    for (&(e1, e2), &count) in pair_counts {
+        *element_counts.entry(e1).or_insert(0) += count;
+        *element_counts.entry(e2).or_insert(0) += count;
+    }
+    element_counts
+}
+
+#[aoc(day14, part2)]
+pub fn solve_part2(polymer_instructions: &PolymerInstructions) -> u64 {
+    let pair_counts = develop_polymer2(40, polymer_instructions);
+    let element_counts = count_elements_in_pairs(&pair_counts);
+    let most_common = *element_counts
+        .values()
+        .max()
+        .expect("no character in polymer at all");
+    let least_common = *element_counts
+        .values()
+        .min()
+        .expect("no character in polymer at all");
+    most_common / 2 - least_common / 2 + 1
 }
 
 #[cfg(test)]
