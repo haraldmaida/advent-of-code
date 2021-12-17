@@ -146,7 +146,8 @@
 //! [Advent of Code 2021 - Day 15](https://adventofcode.com/2021/day/15)
 
 use hashbrown::HashMap;
-use std::collections::VecDeque;
+use std::cmp::Ordering;
+use std::collections::{BinaryHeap, VecDeque};
 use std::fmt::{Display, Formatter};
 use std::ops::Add;
 use std::str::FromStr;
@@ -271,29 +272,62 @@ fn neighbors(Point { x, y }: Point, map: &RiskMap) -> Vec<Point> {
         .collect()
 }
 
+#[derive(Debug, Clone, Copy)]
+struct Node {
+    point: Point,
+    risk: Risk,
+}
+
+impl PartialEq for Node {
+    fn eq(&self, other: &Self) -> bool {
+        self.risk.eq(&other.risk)
+    }
+}
+
+impl Eq for Node {}
+
+impl PartialOrd for Node {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        other.risk.level.partial_cmp(&self.risk.level)
+    }
+}
+
+impl Ord for Node {
+    fn cmp(&self, other: &Self) -> Ordering {
+        other.risk.level.cmp(&self.risk.level)
+    }
+}
+
 fn find_path(start: Point, goal: Point, risk_map: &RiskMap) -> (Vec<Point>, Risk) {
-    let mut open = Vec::new();
-    let mut came_from: HashMap<Point, Point> = HashMap::new();
-    let mut risk_so_far: HashMap<Point, Risk> = HashMap::new();
-    risk_so_far.insert(start, Risk::ZERO);
-    open.push((start, Risk::ZERO));
-    while let Some(index) = open
-        .iter()
-        .enumerate()
-        .min_by_key(|(_, (_, risk))| risk)
-        .map(|(idx, _)| idx)
+    let mut open = BinaryHeap::new();
+    let mut visited: HashMap<Point, (Risk, Option<Point>)> = HashMap::new();
+    visited.insert(start, (Risk::ZERO, None));
+    open.push(Node {
+        point: start,
+        risk: Risk::ZERO,
+    });
+    while let Some(Node {
+        point: current,
+        risk,
+    }) = open.pop()
     {
-        let (current, risk) = open.remove(index);
         if current == goal {
             break;
         }
 
         for neighbor in neighbors(current, risk_map) {
             let new_risk = risk + risk_map.risk(neighbor).unwrap();
-            if new_risk < *risk_so_far.get(&neighbor).unwrap_or(&Risk::MAX) {
-                risk_so_far.insert(neighbor, new_risk);
-                open.push((neighbor, new_risk));
-                came_from.insert(neighbor, current);
+            if new_risk
+                < *visited
+                    .get(&neighbor)
+                    .map(|(risk, _)| risk)
+                    .unwrap_or(&Risk::MAX)
+            {
+                visited.insert(neighbor, (new_risk, Some(current)));
+                open.push(Node {
+                    point: neighbor,
+                    risk: new_risk,
+                });
             }
         }
     }
@@ -301,13 +335,13 @@ fn find_path(start: Point, goal: Point, risk_map: &RiskMap) -> (Vec<Point>, Risk
     let mut path = VecDeque::new();
     path.push_front(goal);
     let mut current = goal;
-    while let Some(&step) = came_from.get(&current) {
+    while let Some(&Some(step)) = visited.get(&current).map(|(_, point)| point) {
         path.push_front(step);
         current = step;
     }
 
     let path = Vec::from_iter(path.into_iter());
-    let risk = *risk_so_far.get(&goal).expect("no calculated risk for goal");
+    let (risk, _) = *visited.get(&goal).expect("no calculated risk for goal");
     (path, risk)
 }
 
@@ -320,11 +354,11 @@ pub fn parse(input: &str) -> RiskMap {
 
 #[aoc(day15, part1)]
 pub fn solve_part1(risk_map: &RiskMap) -> u32 {
-    eprintln!("{}", risk_map);
+    // eprintln!("{}", risk_map);
     let start = risk_map.top_left();
     let goal = risk_map.bottom_right();
-    let (path, total_risk) = find_path(start, goal, risk_map);
-    eprintln!("{:?}", &path);
+    let (_path, total_risk) = find_path(start, goal, risk_map);
+    // eprintln!("{:?}", &_path);
     total_risk.level
 }
 
@@ -365,11 +399,11 @@ fn expand_risk_map(factor: i32, risk_map: &RiskMap) -> RiskMap {
 #[aoc(day15, part2)]
 pub fn solve_part2(risk_map: &RiskMap) -> u32 {
     let risk_map = expand_risk_map(5, risk_map);
-    eprintln!("{}", &risk_map);
+    // eprintln!("{}", &risk_map);
     let start = risk_map.top_left();
     let goal = risk_map.bottom_right();
-    let (path, total_risk) = find_path(start, goal, &risk_map);
-    eprintln!("{:?}", &path);
+    let (_path, total_risk) = find_path(start, goal, &risk_map);
+    // eprintln!("{:?}", &_path);
     total_risk.level
 }
 
