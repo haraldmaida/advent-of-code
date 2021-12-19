@@ -568,7 +568,6 @@ pub fn evaluate_ast(ast: &Ast) -> i64 {
 #[aoc(day16, part2)]
 pub fn solve_part2(message: &str) -> i64 {
     let ast = decode_message(message).unwrap_or_else(|err| panic!("{}", err));
-    dbg!(&ast);
     evaluate_ast(&ast)
 }
 
