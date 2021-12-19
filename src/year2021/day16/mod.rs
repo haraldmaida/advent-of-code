@@ -237,25 +237,64 @@ pub enum Length {
     NumberOfSubPackets(u32),
 }
 
-fn hex_to_binary(chr: char) -> Result<&'static str, String> {
+fn hex_to_binary(chr: char) -> Result<[char; 4], String> {
     match chr {
-        '0' => Ok("0000"),
-        '1' => Ok("0001"),
-        '2' => Ok("0010"),
-        '3' => Ok("0011"),
-        '4' => Ok("0100"),
-        '5' => Ok("0101"),
-        '6' => Ok("0110"),
-        '7' => Ok("0111"),
-        '8' => Ok("1000"),
-        '9' => Ok("1001"),
-        'A' => Ok("1010"),
-        'B' => Ok("1011"),
-        'C' => Ok("1100"),
-        'D' => Ok("1101"),
-        'E' => Ok("1110"),
-        'F' => Ok("1111"),
+        '0' => Ok(['0', '0', '0', '0']),
+        '1' => Ok(['0', '0', '0', '1']),
+        '2' => Ok(['0', '0', '1', '0']),
+        '3' => Ok(['0', '0', '1', '1']),
+        '4' => Ok(['0', '1', '0', '0']),
+        '5' => Ok(['0', '1', '0', '1']),
+        '6' => Ok(['0', '1', '1', '0']),
+        '7' => Ok(['0', '1', '1', '1']),
+        '8' => Ok(['1', '0', '0', '0']),
+        '9' => Ok(['1', '0', '0', '1']),
+        'A' => Ok(['1', '0', '1', '0']),
+        'B' => Ok(['1', '0', '1', '1']),
+        'C' => Ok(['1', '1', '0', '0']),
+        'D' => Ok(['1', '1', '0', '1']),
+        'E' => Ok(['1', '1', '1', '0']),
+        'F' => Ok(['1', '1', '1', '1']),
         _ => Err(format!("not a hexadecimal character: {}", chr)),
+    }
+}
+
+/// Iterator over bits.
+#[derive(Debug)]
+pub struct Bits<T> {
+    chars: T,
+    buffer: [char; 4],
+    current: usize,
+}
+
+impl<T> Bits<T>
+where
+    T: Iterator<Item = char>,
+{
+    fn new(chars: T) -> Self {
+        Self {
+            chars,
+            buffer: [' '; 4],
+            current: 3,
+        }
+    }
+}
+
+impl<T> Iterator for Bits<T>
+where
+    T: Iterator<Item = char>,
+{
+    type Item = <T as Iterator>::Item;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.current == 3 {
+            let hex = self.chars.next()?;
+            self.buffer = hex_to_binary(hex).unwrap_or_else(|err| panic!("{}", err));
+            self.current = 0;
+        } else {
+            self.current += 1;
+        }
+        Some(self.buffer[self.current])
     }
 }
 
@@ -266,96 +305,135 @@ pub fn parse(input: &str) -> String {
         .filter(|line| !line.is_empty())
         .next()
         .expect("no input line");
-    let mut binary_string = String::new();
-    for chr in line.chars() {
-        let bit_str = hex_to_binary(chr).unwrap_or_else(|err| panic!("{}", err));
-        binary_string.push_str(bit_str);
+    line.to_string()
+}
+
+fn decode_version(input: &mut impl Iterator<Item = char>) -> Result<(u8, usize), String> {
+    const VERSION_BITS: usize = 3;
+    let version_bits = input.take(VERSION_BITS).collect::<String>();
+    if version_bits.len() < VERSION_BITS {
+        return Err(format!(
+            "not enough bits to read {} bits version field: {:?}",
+            VERSION_BITS, version_bits
+        ));
     }
-    binary_string
+    let version = u8::from_str_radix(&version_bits, 2)
+        .map_err(|err| format!("not an integer: {} - {}", version_bits, err))?;
+    Ok((version, VERSION_BITS))
 }
 
-fn decode_version(input: &str) -> (u8, &str, usize) {
-    let (version_str, rest) = input.split_at(3);
-    let version = u8::from_str_radix(version_str, 2)
-        .unwrap_or_else(|err| panic!("not an integer: {} - {}", version_str, err));
-    (version, rest, 3)
+fn decode_type_id(input: &mut impl Iterator<Item = char>) -> Result<(u8, usize), String> {
+    const TYPE_ID_BITS: usize = 3;
+    let type_id_bits = input.take(TYPE_ID_BITS).collect::<String>();
+    if type_id_bits.len() < TYPE_ID_BITS {
+        return Err(format!(
+            "not enough bits to read {} bits type_id field: {:?}",
+            TYPE_ID_BITS, type_id_bits
+        ));
+    }
+    let type_id = u8::from_str_radix(&type_id_bits, 2)
+        .map_err(|err| format!("not an integer: {} - {}", type_id_bits, err))?;
+    Ok((type_id, TYPE_ID_BITS))
 }
 
-fn decode_type_id(input: &str) -> (u8, &str, usize) {
-    let (type_id_str, rest) = input.split_at(3);
-    let type_id = u8::from_str_radix(type_id_str, 2)
-        .unwrap_or_else(|err| panic!("not an integer: {} - {}", type_id_str, err));
-    (type_id, rest, 3)
+fn decode_header(input: &mut impl Iterator<Item = char>) -> Result<(Header, usize), String> {
+    let (version, consumed1) = decode_version(input)?;
+    let (type_id, consumed2) = decode_type_id(input)?;
+    Ok((Header { version, type_id }, consumed1 + consumed2))
 }
 
-fn decode_header(input: &str) -> (Header, &str, usize) {
-    let (version, rest, consumed1) = decode_version(input);
-    let (type_id, rest, consumed2) = decode_type_id(rest);
-    (Header { version, type_id }, rest, consumed1 + consumed2)
-}
-
-fn decode_number(input: &str) -> (i64, &str, usize) {
+fn decode_number(input: &mut impl Iterator<Item = char>) -> Result<(i64, usize), String> {
+    const NUMBER_SEQ_BITS: usize = 1;
+    const NUMBER_GROUP_BITS: usize = 4;
     let mut consumed = 0;
-    let mut input = input;
-    let mut number = 0;
-    let mut keep_reading = true;
-    while keep_reading {
-        let (group, rest) = input.split_at(5);
-        consumed += 5;
-        let (more, digit) = group.split_at(1);
-        number = number * 16
-            + i64::from_str_radix(digit, 2)
-                .unwrap_or_else(|err| panic!("not a binary number: {} - {}", digit, err));
-        input = rest;
-        keep_reading = more == "1";
+    let mut number_bits = String::with_capacity(4);
+    loop {
+        let more = input.next().ok_or_else(|| {
+            format!(
+                "not enough bits to read {} bit number sequence",
+                NUMBER_SEQ_BITS
+            )
+        })?;
+        number_bits.extend(input.take(NUMBER_GROUP_BITS));
+        consumed += NUMBER_GROUP_BITS + NUMBER_SEQ_BITS;
+        if more == '0' {
+            break;
+        }
     }
-    (number, input, consumed)
+    if number_bits.len() < NUMBER_GROUP_BITS {
+        return Err(format!(
+            "not enough bits to read {} bits literal number: {:?}",
+            NUMBER_GROUP_BITS, &number_bits
+        ));
+    }
+    let number = i64::from_str_radix(&number_bits, 2)
+        .unwrap_or_else(|err| panic!("not a binary number: {} - {}", number_bits, err));
+    Ok((number, consumed))
 }
 
-fn decode_length(input: &str) -> (Length, &str, usize) {
-    let (length_type, rest) = input.split_at(1);
-    match length_type {
-        "0" => {
-            let (length_str, rest) = rest.split_at(15);
-            let total_length = usize::from_str_radix(length_str, 2)
-                .unwrap_or_else(|err| panic!("not a valid length: {} - {}", length_str, err));
-            (Length::TotalLength(total_length), rest, 16)
+fn decode_length(input: &mut impl Iterator<Item = char>) -> Result<(Length, usize), String> {
+    const LENGTH_TYPE_BITS: usize = 1;
+    const TOTAL_LENGTH_BITS: usize = 15;
+    const NUM_PACKETS_LENGTH_BITS: usize = 11;
+    let length_type_bits = input.next().ok_or_else(|| {
+        format!(
+            "not enough bits to read {} bits length sequence field",
+            LENGTH_TYPE_BITS
+        )
+    })?;
+    match length_type_bits {
+        '0' => {
+            let length_bits = input.take(TOTAL_LENGTH_BITS).collect::<String>();
+            let total_length = usize::from_str_radix(&length_bits, 2)
+                .map_err(|err| format!("not a valid length: {} - {}", length_bits, err))?;
+            Ok((
+                Length::TotalLength(total_length),
+                LENGTH_TYPE_BITS + TOTAL_LENGTH_BITS,
+            ))
         }
-        "1" => {
-            let (num_subpackets_str, rest) = rest.split_at(11);
-            let num_subpackets = u32::from_str_radix(num_subpackets_str, 2).unwrap_or_else(|err| {
-                panic!(
+        '1' => {
+            let num_subpackets_bits = input.take(NUM_PACKETS_LENGTH_BITS).collect::<String>();
+            let num_subpackets = u32::from_str_radix(&num_subpackets_bits, 2).map_err(|err| {
+                format!(
                     "not a valid number of subpackets: {} - {}",
-                    num_subpackets_str, err
+                    num_subpackets_bits, err
                 )
-            });
-            (Length::NumberOfSubPackets(num_subpackets), rest, 12)
+            })?;
+            Ok((
+                Length::NumberOfSubPackets(num_subpackets),
+                LENGTH_TYPE_BITS + NUM_PACKETS_LENGTH_BITS,
+            ))
         }
-        _ => panic!("invalid length type: {}", length_type),
+        _ => Err(format!("invalid length type: {}", length_type_bits)),
     }
 }
 
 #[aoc(day16, part1)]
 pub fn solve_part1(message: &str) -> u32 {
-    let mut open = Vec::new();
-    let (header, rest, _) = decode_header(message);
     let mut version_sum = 0;
-    open.push((header, rest));
-    while let Some((header, input)) = open.pop() {
-        version_sum += header.version as u32;
-        let rest = match header.type_id {
+    let mut input = Bits::new(message.chars());
+    let mut open = Vec::new();
+    let (header, _) = decode_header(&mut input)
+        .unwrap_or_else(|err| panic!("invalid message: {:?} - {}", message, err));
+    open.push(header);
+    while let Some(header) = open.pop() {
+        match header.type_id {
             4 => {
-                let (_number, rest, _) = decode_number(input);
-                rest
+                if let Ok((_number, _)) = decode_number(&mut input) {
+                } else {
+                    break;
+                }
             }
             _ => {
-                let (_length, rest, _) = decode_length(input);
-                rest
+                if let Ok((_length, _)) = decode_length(&mut input) {
+                } else {
+                    break;
+                }
             }
         };
-        if rest.len() > 10 {
-            let (header, rest, _) = decode_header(rest);
-            open.push((header, rest));
+        version_sum += header.version as u32;
+        if let Ok((header, _)) = decode_header(&mut input) {
+            open.push(header);
         }
     }
     version_sum
@@ -444,13 +522,11 @@ fn close_packets(open: &mut Vec<(Header, Length, Vec<Entry>)>) -> Result<Option<
 
 pub fn decode_message(message: &str) -> Result<Ast, String> {
     let mut open: Vec<(Header, Length, Vec<Entry>)> = Vec::new();
-    let mut input = message;
-    while input.len() > 10 {
-        let (header, rest, consumed1) = decode_header(input);
+    let mut input = Bits::new(message.chars());
+    while let Ok((header, consumed1)) = decode_header(&mut input) {
         match header.type_id {
             4 => {
-                let (number, rest, consumed2) = decode_number(rest);
-                input = rest;
+                let (number, consumed2) = decode_number(&mut input)?;
                 update_remaining_total_length(&mut open, consumed1 + consumed2);
                 if let Some((_, _, data)) = open.last_mut() {
                     data.push(Entry::Number(number));
@@ -460,8 +536,7 @@ pub fn decode_message(message: &str) -> Result<Ast, String> {
                 }
             }
             _ => {
-                let (length, rest, consumed2) = decode_length(rest);
-                input = rest;
+                let (length, consumed2) = decode_length(&mut input)?;
                 update_remaining_total_length(&mut open, consumed1 + consumed2);
                 open.push((header, length, Vec::new()));
             }
