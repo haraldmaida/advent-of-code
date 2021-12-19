@@ -159,13 +159,70 @@
 //!
 //! Decode the structure of your hexadecimal-encoded BITS transmission; what do
 //! you get if you add up the version numbers in all packets?
-//!//!
+//!
+//! ## Part Two
+//!
+//! Now that you have the structure of your transmission decoded, you can
+//! calculate the value of the expression it represents.
+//!
+//! Literal values (type ID 4) represent a single number as described above.
+//! The remaining type IDs are more interesting:
+//!
+//! - Packets with type ID 0 are sum packets - their value is the sum of the
+//!   values of their sub-packets. If they only have a single sub-packet, their
+//!   value is the value of the sub-packet.
+//! - Packets with type ID 1 are product packets - their value is the result of
+//!   multiplying together the values of their sub-packets. If they only have a
+//!   single sub-packet, their value is the value of the sub-packet.
+//! - Packets with type ID 2 are minimum packets - their value is the minimum of
+//!   the values of their sub-packets.
+//! - Packets with type ID 3 are maximum packets - their value is the maximum of
+//!   the values of their sub-packets.
+//! - Packets with type ID 5 are greater than packets - their value is 1 if the
+//!   value of the first sub-packet is greater than the value of the second
+//!   sub-packet; otherwise, their value is 0. These packets always have exactly
+//!   two sub-packets.
+//! - Packets with type ID 6 are less than packets - their value is 1 if the
+//!   value of the first sub-packet is less than the value of the second
+//!   sub-packet; otherwise, their value is 0. These packets always have exactly
+//!   two sub-packets.
+//! - Packets with type ID 7 are equal to packets - their value is 1 if the
+//!   value of the first sub-packet is equal to the value of the second
+//!   sub-packet; otherwise, their value is 0. These packets always have exactly
+//!   two sub-packets.
+//!
+//! Using these rules, you can now work out the value of the outermost packet in
+//! your BITS transmission.
+//!
+//! For example:
+//!
+//! - `C200B40A82` finds the sum of 1 and 2, resulting in the value 3.
+//! - `04005AC33890` finds the product of 6 and 9, resulting in the value 54.
+//! - `880086C3E88112` finds the minimum of 7, 8, and 9, resulting in the value 7.
+//! - `CE00C43D881120` finds the maximum of 7, 8, and 9, resulting in the value 9.
+//! - `D8005AC2A8F0` produces 1, because 5 is less than 15.
+//! - `F600BC2D8F` produces 0, because 5 is not greater than 15.
+//! - `9C005AC2F8F0` produces 0, because 5 is not equal to 15.
+//! - `9C0141080250320F1802104A08` produces 1, because 1 + 3 = 2 * 2.
+//!
+//! What do you get if you evaluate the expression represented by your
+//! hexadecimal-encoded BITS transmission?
+//!
 //! [Advent of Code 2021 - Day 16](https://adventofcode.com/2021/day/16)
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Packet {
-    pub header: Header,
-    pub data: Vec<Entry>,
+pub struct Ast(Entry);
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Entry {
+    Number(i64),
+    Sum(Vec<Entry>),
+    Product(Vec<Entry>),
+    Minimum(Vec<Entry>),
+    Maximum(Vec<Entry>),
+    GreaterThan(Box<Entry>, Box<Entry>),
+    LessThan(Box<Entry>, Box<Entry>),
+    EqualTo(Box<Entry>, Box<Entry>),
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -174,16 +231,10 @@ pub struct Header {
     pub type_id: u8,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum Entry {
-    Number(i64),
-    Operator(Vec<usize>),
-}
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Length {
     TotalLength(usize),
-    NumberOfSubPackets(usize),
+    NumberOfSubPackets(u32),
 }
 
 fn hex_to_binary(chr: char) -> Result<&'static str, String> {
@@ -223,32 +274,34 @@ pub fn parse(input: &str) -> String {
     binary_string
 }
 
-fn decode_version(input: &str) -> (u8, &str) {
+fn decode_version(input: &str) -> (u8, &str, usize) {
     let (version_str, rest) = input.split_at(3);
     let version = u8::from_str_radix(version_str, 2)
         .unwrap_or_else(|err| panic!("not an integer: {} - {}", version_str, err));
-    (version, rest)
+    (version, rest, 3)
 }
 
-fn decode_type_id(input: &str) -> (u8, &str) {
+fn decode_type_id(input: &str) -> (u8, &str, usize) {
     let (type_id_str, rest) = input.split_at(3);
     let type_id = u8::from_str_radix(type_id_str, 2)
         .unwrap_or_else(|err| panic!("not an integer: {} - {}", type_id_str, err));
-    (type_id, rest)
+    (type_id, rest, 3)
 }
 
-fn decode_header(input: &str) -> (Header, &str) {
-    let (version, rest) = decode_version(input);
-    let (type_id, rest) = decode_type_id(rest);
-    (Header { version, type_id }, rest)
+fn decode_header(input: &str) -> (Header, &str, usize) {
+    let (version, rest, consumed1) = decode_version(input);
+    let (type_id, rest, consumed2) = decode_type_id(rest);
+    (Header { version, type_id }, rest, consumed1 + consumed2)
 }
 
-fn decode_number(input: &str) -> (i64, &str) {
+fn decode_number(input: &str) -> (i64, &str, usize) {
+    let mut consumed = 0;
     let mut input = input;
     let mut number = 0;
     let mut keep_reading = true;
     while keep_reading {
         let (group, rest) = input.split_at(5);
+        consumed += 5;
         let (more, digit) = group.split_at(1);
         number = number * 16
             + i64::from_str_radix(digit, 2)
@@ -256,28 +309,27 @@ fn decode_number(input: &str) -> (i64, &str) {
         input = rest;
         keep_reading = more == "1";
     }
-    (number, input)
+    (number, input, consumed)
 }
 
-fn decode_length(input: &str) -> (Length, &str) {
+fn decode_length(input: &str) -> (Length, &str, usize) {
     let (length_type, rest) = input.split_at(1);
     match length_type {
         "0" => {
             let (length_str, rest) = rest.split_at(15);
             let total_length = usize::from_str_radix(length_str, 2)
                 .unwrap_or_else(|err| panic!("not a valid length: {} - {}", length_str, err));
-            (Length::TotalLength(total_length), rest)
+            (Length::TotalLength(total_length), rest, 16)
         }
         "1" => {
             let (num_subpackets_str, rest) = rest.split_at(11);
-            let num_subpackets =
-                usize::from_str_radix(num_subpackets_str, 2).unwrap_or_else(|err| {
-                    panic!(
-                        "not a valid number of subpackets: {} - {}",
-                        num_subpackets_str, err
-                    )
-                });
-            (Length::NumberOfSubPackets(num_subpackets), rest)
+            let num_subpackets = u32::from_str_radix(num_subpackets_str, 2).unwrap_or_else(|err| {
+                panic!(
+                    "not a valid number of subpackets: {} - {}",
+                    num_subpackets_str, err
+                )
+            });
+            (Length::NumberOfSubPackets(num_subpackets), rest, 12)
         }
         _ => panic!("invalid length type: {}", length_type),
     }
@@ -286,33 +338,238 @@ fn decode_length(input: &str) -> (Length, &str) {
 #[aoc(day16, part1)]
 pub fn solve_part1(message: &str) -> u32 {
     let mut open = Vec::new();
-    let (header, rest) = decode_header(message);
+    let (header, rest, _) = decode_header(message);
     let mut version_sum = 0;
     open.push((header, rest));
     while let Some((header, input)) = open.pop() {
         version_sum += header.version as u32;
         let rest = match header.type_id {
             4 => {
-                let (_number, rest) = decode_number(input);
+                let (_number, rest, _) = decode_number(input);
                 rest
             }
             _ => {
-                let (length, rest) = decode_length(input);
-                match length {
-                    Length::TotalLength(len) => {
-                        let (_subpackets, _rest) = rest.split_at(len);
-                        rest
-                    }
-                    Length::NumberOfSubPackets(_num) => rest,
-                }
+                let (_length, rest, _) = decode_length(input);
+                rest
             }
         };
         if rest.len() > 10 {
-            let (header, rest) = decode_header(rest);
+            let (header, rest, _) = decode_header(rest);
             open.push((header, rest));
         }
     }
     version_sum
+}
+
+fn decode_operation(header: Header, data: Vec<Entry>) -> Result<Entry, String> {
+    match header.type_id {
+        0 => Ok(Entry::Sum(data)),
+        1 => Ok(Entry::Product(data)),
+        2 => Ok(Entry::Minimum(data)),
+        3 => Ok(Entry::Maximum(data)),
+        5 => {
+            let mut data = data.into_iter();
+            let data1 = data
+                .next()
+                .ok_or_else(|| format!("no operand for greater than operation"))?;
+            let data2 = data
+                .next()
+                .ok_or_else(|| format!("missing second operand for greater than operation"))?;
+            if data.next().is_some() {
+                return Err(format!("more than 2 operands for greater than operation"));
+            }
+            Ok(Entry::GreaterThan(Box::new(data1), Box::new(data2)))
+        }
+        6 => {
+            let mut data = data.into_iter();
+            let data1 = data
+                .next()
+                .ok_or_else(|| format!("no operand for less than operation"))?;
+            let data2 = data
+                .next()
+                .ok_or_else(|| format!("missing second operand for less than operation"))?;
+            if data.next().is_some() {
+                return Err(format!("more than 2 operands for less than operation"));
+            }
+            Ok(Entry::LessThan(Box::new(data1), Box::new(data2)))
+        }
+        7 => {
+            let mut data = data.into_iter();
+            let data1 = data
+                .next()
+                .ok_or_else(|| format!("no operand for equal to operation"))?;
+            let data2 = data
+                .next()
+                .ok_or_else(|| format!("missing second operand for equal to operation"))?;
+            if data.next().is_some() {
+                return Err(format!("more than 2 operands for equal to operation"));
+            }
+            Ok(Entry::EqualTo(Box::new(data1), Box::new(data2)))
+        }
+        _ => Err(format!("unrecognized type id: {}", header.type_id)),
+    }
+}
+
+fn update_remaining_total_length(open: &mut [(Header, Length, Vec<Entry>)], consumed: usize) {
+    open.iter_mut()
+        .for_each(|(_, remaining, _)| match remaining {
+            Length::TotalLength(len) => *len -= consumed,
+            Length::NumberOfSubPackets(_) => {}
+        });
+}
+
+fn close_packets(open: &mut Vec<(Header, Length, Vec<Entry>)>) -> Result<Option<Entry>, String> {
+    while let Some((header, mut remaining, data)) = open.pop() {
+        let end_of_packet = match &mut remaining {
+            Length::TotalLength(len) => *len == 0,
+            Length::NumberOfSubPackets(num) => {
+                *num -= 1;
+                *num == 0
+            }
+        };
+        if end_of_packet {
+            let operation = decode_operation(header, data)?;
+            if let Some((_, _, parent)) = open.last_mut() {
+                parent.push(operation);
+            } else {
+                return Ok(Some(operation));
+            }
+        } else {
+            open.push((header, remaining, data));
+            break;
+        }
+    }
+    Ok(None)
+}
+
+pub fn decode_message(message: &str) -> Result<Ast, String> {
+    let mut open: Vec<(Header, Length, Vec<Entry>)> = Vec::new();
+    let mut input = message;
+    while input.len() > 10 {
+        let (header, rest, consumed1) = decode_header(input);
+        match header.type_id {
+            4 => {
+                let (number, rest, consumed2) = decode_number(rest);
+                input = rest;
+                update_remaining_total_length(&mut open, consumed1 + consumed2);
+                if let Some((_, _, data)) = open.last_mut() {
+                    data.push(Entry::Number(number));
+                }
+                if let Some(root) = close_packets(&mut open)? {
+                    return Ok(Ast(root));
+                }
+            }
+            _ => {
+                let (length, rest, consumed2) = decode_length(rest);
+                input = rest;
+                update_remaining_total_length(&mut open, consumed1 + consumed2);
+                open.push((header, length, Vec::new()));
+            }
+        }
+    }
+    Err(format!("no operation in message"))
+}
+
+fn evaluate_operation(operator: &Entry, params: &[i64]) -> i64 {
+    match operator {
+        Entry::Number(_) => unreachable!(),
+        Entry::Sum(_) => params.iter().copied().sum(),
+        Entry::Product(_) => params.iter().copied().product(),
+        Entry::Minimum(_) => params.iter().copied().min().unwrap_or(0),
+        Entry::Maximum(_) => params.iter().copied().max().unwrap_or(0),
+        Entry::GreaterThan(_, _) => {
+            if params[0] > params[1] {
+                1
+            } else {
+                0
+            }
+        }
+        Entry::LessThan(_, _) => {
+            if params[0] < params[1] {
+                1
+            } else {
+                0
+            }
+        }
+        Entry::EqualTo(_, _) => {
+            if params[0] == params[1] {
+                1
+            } else {
+                0
+            }
+        }
+    }
+}
+
+pub fn evaluate_ast(ast: &Ast) -> i64 {
+    let mut open: Vec<(&Entry, Option<usize>)> = Vec::new();
+    let mut closed: Vec<(&Entry, Option<usize>, Vec<i64>)> = Vec::new();
+    open.push((&ast.0, None));
+    while let Some((entry, parent)) = open.pop() {
+        match entry {
+            Entry::Number(number) => {
+                if let Some(index) = parent {
+                    closed[index].2.push(*number);
+                } else {
+                    return *number;
+                }
+            }
+            Entry::Sum(entries) => {
+                let current = Some(closed.len());
+                open.extend(entries.iter().rev().map(|e| (e, current)));
+                closed.push((entry, parent, Vec::new()));
+            }
+            Entry::Product(entries) => {
+                let current = Some(closed.len());
+                open.extend(entries.iter().rev().map(|e| (e, current)));
+                closed.push((entry, parent, Vec::new()));
+            }
+            Entry::Minimum(entries) => {
+                let current = Some(closed.len());
+                open.extend(entries.iter().rev().map(|e| (e, current)));
+                closed.push((entry, parent, Vec::new()));
+            }
+            Entry::Maximum(entries) => {
+                let current = Some(closed.len());
+                open.extend(entries.iter().rev().map(|e| (e, current)));
+                closed.push((entry, parent, Vec::new()));
+            }
+            Entry::GreaterThan(entry1, entry2) => {
+                let current = Some(closed.len());
+                open.push((entry2, current));
+                open.push((entry1, current));
+                closed.push((entry, parent, Vec::new()));
+            }
+            Entry::LessThan(entry1, entry2) => {
+                let current = Some(closed.len());
+                open.push((entry2, current));
+                open.push((entry1, current));
+                closed.push((entry, parent, Vec::new()));
+            }
+            Entry::EqualTo(entry1, entry2) => {
+                let current = Some(closed.len());
+                open.push((entry2, current));
+                open.push((entry1, current));
+                closed.push((entry, parent, Vec::new()));
+            }
+        }
+    }
+    while let Some((operator, parent, params)) = closed.pop() {
+        let result = evaluate_operation(operator, &params);
+        if let Some(index) = parent {
+            closed[index].2.insert(0, result);
+        } else {
+            return result;
+        }
+    }
+    unreachable!()
+}
+
+#[aoc(day16, part2)]
+pub fn solve_part2(message: &str) -> i64 {
+    let ast = decode_message(message).unwrap_or_else(|err| panic!("{}", err));
+    dbg!(&ast);
+    evaluate_ast(&ast)
 }
 
 #[cfg(test)]
